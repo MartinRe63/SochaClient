@@ -121,7 +121,7 @@ public class NodeManager {
 	public static void movePosition( int curNode, int[]MoveArr, long[][]positionData, int color) 
 	{
 		// get the move from the currentPosition and change the positionData
-		int[] move = getYX(MoveArr[curNode]);
+		int[] move = PosManager.getYX(MoveArr[curNode]);
 		
 		// try to enable register usage
 		int moveFrom = move[0];
@@ -205,29 +205,14 @@ public class NodeManager {
 					int y = p / 10;
 					int newP;
 	      			if ( ( newP = movePossible( x, y, dir, moveCnt, positionData, color ) ) > -1 ) 
-	      				moves[moveCnt++] = newP;
+	      				moves[moveCnt++] = PosManager.PackMove( y*10+x, newP);
 	      			if ( ( newP = movePossible( x, y, dir+4, moveCnt, positionData, color ) ) > -1 ) 
-	      				moves[moveCnt++] = newP;
+	      				moves[moveCnt++] = PosManager.PackMove( y*10+x, newP);;
 				}
 			}
 		}
 		return moveCnt;
 	}
-	/**
-	* A bit move (yto - xto - yfrom - xfrom is converted to an array of integer[From x+10*y .. To x+10*y]. 
-	*/
-	public static int[] getYX( int move )
-	{
-		int[] res = new int[2];
-		int mask = 15;
-		int bitMove = move;
-		res[0] = bitMove & mask; mask <<= 4;
-		res[0] += ( ( bitMove & mask ) >> 4 ) * 10; mask <<= 4;
-		res[1] =  ( bitMove & mask ) >> 8; mask <<= 4;
-		res[1] += ( ( bitMove & mask ) >> 12 ) * 10; 
-		return res;
-	}
-	
 	public void selectAction( ) throws Exception
 	{
 		int[] visited = new int[20];

@@ -9,6 +9,10 @@ public class MaskManager {
 
 	public static long neighborMasks[][] = new long [100][2];
 	
+	// A fish at 0,x or x,0 has a value 0
+	// A fish at 1,x or x,1 has a value 1
+	public static long fishValueMasks[][] = new long[4][2];  // Dimension - value, bitmask
+	
 	public static void initMasks() {
 		int xMove = 0;
 		int yMove = 0;
@@ -61,6 +65,14 @@ public class MaskManager {
 					directionMasks[dir][y*10+x][1] = highMask;
 					// System.out.println("dir=" + dir + " coord=" + (y*10+x) + ">" + Long.toBinaryString(highMask) + " " + Long.toBinaryString(lowMask));
 				}
+			}
+		}
+		for ( int y= 0; y < 10; y++)
+		{
+			for ( int x = 0; x < 10; x++)
+			{
+				int val = Integer.min(x >= 5 ? 9-x : x, y >= 5 ? 9-y : y);
+				PosManager.SetBit(fishValueMasks[val], y*10+x);
 			}
 		}
 	}

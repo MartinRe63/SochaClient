@@ -8,6 +8,10 @@ public class PosManager {
 		else
 			pos[1] |= ( 1L << bitId-64 ); 
 	}
+	static int BitCnt( long[] pos )
+	{
+		return Long.bitCount(pos[0]) + Long.bitCount(pos[1]);  
+	}
 	static void ClearBit( long[] pos, int bitId )
 	{
 		if ( bitId < 64 )
@@ -90,5 +94,120 @@ public class PosManager {
 		PosDebugOut("blue", Pos[1]);
 		PosDebugOut("crake", Pos[2]);
 	}
+	/**
+	* A bit move (yto - xto - yfrom - xfrom is converted to an array of integer[From x+10*y .. To x+10*y]. 
+	*/
+	public static int[] getYX( int move )
+	{
+		int[] res = new int[2];
+		int mask = 15;
+		int bitMove = move;
+		res[0] = bitMove & mask; mask <<= 4;
+		res[0] += ( ( bitMove & mask ) >> 4 ) * 10; mask <<= 4;
+		res[1] =  ( bitMove & mask ) >> 8; mask <<= 4;
+		res[1] += ( ( bitMove & mask ) >> 12 ) * 10; 
+		return res;
+	}
+	public static String PosToString( int p )
+	{
+		return new String(p%10 + "," + p/10);
+	}
+	public static String packMoveToString( int move )
+	{
+		int[] moves =  getYX( move );
+		String res = new String("from:"+PosToString(moves[0])+","+PosToString(moves[1])); 
+		return res;		
+	}
+	public static int PackMove( int moveFrom, int moveTo )
+	{
+		int[]move = new int[] {moveFrom, moveTo};
+		return PackMove(move);
+	}
 	
+	
+	public static long blockValue ( long[] blockData )
+	{
+		long ret = Long.bitCount(blockData[0]) + Long.bitCount(blockData[1]);
+		int val = 4;
+		while ( ( blockData[0] & MaskManager.fishValueMasks[val][0] ) == 0 && (blockData[1] & MaskManager.fishValueMasks[val][1]) == 0)
+			val--;
+		ret *= 8 << val;
+		return ret;
+	}
+	public static int getNextFishPos( long low, long high, int currentPos )
+	{
+		int ret = currentPos;
+		long[] Data = new long[] { low, high };
+		long mask = 1L << ret % 64;
+		long toCheck = Data[ret / 64];
+		while ( ( toCheck & mask ) == 0 && ( ret % 8 ) != 0) 
+		{
+			mask <<= 1;
+			ret ++;
+		}
+		mask = 255L << ret; // (8 bit mask)
+		while ( ( toCheck & mask ) == 0 )
+		{
+			mask <<= 8;
+			ret += 8;
+			if ( ret >= 64 )
+			{
+				toCheck = Data[ret / 64];
+				mask = 255L;
+			}
+		}
+		mask = 1L << ret % 64;
+		while ( ( toCheck & mask) == 0 ) 
+		{
+			mask <<= 1;
+			ret ++;
+		}
+		assert ret < 128 : "software issue - we only have 128 bit fields here";
+		return ret;
+	}
+	/**
+	 * Extend a block of fishes for a number of new fishes
+	 * @param posData      - posData fishes not in the block and not new for the current block
+	 * @param blockList    - fishes already considered for the block
+	 * @param newFishes    - new fishes for the current block
+	 * @return
+	 */
+	public static void extendBlock( long[]posData, long[]block, long newFishesLow, long newFishesHigh )
+	{
+		assert (newFishesLow > 0) || (newFishesHigh > 0) : "Software Issue - no new fishes found.";  
+		int bitCnt = Long.bitCount(newFishesLow) + Long.bitCount(newFishesHigh);
+		int bitPos = 0;
+		for( int k=0; k<bitCnt; k++)
+		{
+			bitPos = getNextFishPos(newFishesLow, newFishesHigh, bitPos);
+			PosManager.SetBit(block, bitPos);
+			long foundNewFishesLow = MaskManager.neighborMasks[bitPos][0] & ( posData[0] ^ block[0] );
+			long foundNewFishesHigh = MaskManager.neighborMasks[bitPos][1] & ( posData[1] ^ block[1] );
+			if ( Long.bitCount(foundNewFishesLow) > 0 || Long.bitCount(foundNewFishesHigh) > 0)
+				extendBlock( posData, block, foundNewFishesLow, foundNewFishesHigh );
+		}
+	}
+	
+	public static int getBlockAndCnt( long[] posData, long[][] blockList) 
+	{
+		int cnt = 0;
+		long[] initPos = new long[] {0,0};
+		int bitToFind = PosManager.BitCnt( posData );
+		long restFishesLow = posData[0]; 
+		long restFishesHigh = posData[1]; 
+		while ( bitToFind > 0 )
+		{
+			int bitId = getNextFishPos( restFishesLow, restFishesHigh, 0);
+			PosManager.SetBit(initPos, bitId);
+			extendBlock( posData, blockList[cnt], initPos[0], initPos[1]);
+			int bitFound = PosManager.BitCnt(blockList[cnt]);
+			assert bitFound > 0 : "Software Issue. A block must contain in minimum 1 fish, otherwise this is an endless loop.";
+			bitToFind -= bitFound; 
+			cnt++;
+			initPos[0] = 0;
+			initPos[1] = 0;
+		}
+		return cnt;
+	}
+
 }
