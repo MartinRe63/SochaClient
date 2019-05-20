@@ -49,10 +49,11 @@ public class MaskManager {
 								moveMasks[corr == 1 ? dir : dir + 4][moveCnt][y*10+x][0] |= lowMoveMask;
 								moveMasks[corr == 1 ? dir : dir + 4][moveCnt][y*10+x][1] |= highMoveMask;
 								// System.out.println("dir=" + (corr == 1 ? dir : dir + 4) + " moveCnt=" + moveCnt + " coord=" + (y*10+x) + ">" + Long.toBinaryString(highMoveMask) + " " + Long.toBinaryString(lowMoveMask));
-								if (moveCnt == 1) {
+								if (moveCnt == 1) 
+								{
 									neighborMasks[y*10+x][0] |= lowMoveMask;
 									neighborMasks[y*10+x][1] |= highMoveMask;
-									System.out.println("dir=" + (corr == 1 ? dir : dir + 4) + " coord=" + (y*10+x) + ">" + Long.toBinaryString(neighborMasks[y*10+x][1]) + " " + Long.toBinaryString(neighborMasks[y*10+x][0]));
+									// System.out.println("dir=" + (corr == 1 ? dir : dir + 4) + " coord=" + (y*10+x) + ">" + Long.toBinaryString(neighborMasks[y*10+x][1]) + " " + Long.toBinaryString(neighborMasks[y*10+x][0]));
 								}
 							}
 							
