@@ -11,7 +11,7 @@ public class MaskManager {
 	
 	// A fish at 0,x or x,0 has a value 0
 	// A fish at 1,x or x,1 has a value 1
-	public static long fishValueMasks[][] = new long[4][2];  // Dimension - value, bitmask
+	public static long fishValueMasks[][] = new long[5][2];  // Dimension - value, bitmask
 	
 	public static void initMasks() {
 		int xMove = 0;

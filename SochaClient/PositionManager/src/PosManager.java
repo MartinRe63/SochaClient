@@ -146,15 +146,17 @@ public class PosManager {
 			ret ++;
 		}
 		mask = 255L << ret; // (8 bit mask)
+		String s = "";
 		while ( ( toCheck & mask ) == 0 )
 		{
 			mask <<= 8;
 			ret += 8;
-			if ( ret >= 64 )
+			if ( ret == 64 )
 			{
 				toCheck = Data[ret / 64];
 				mask = 255L;
 			}
+			s = Long.toString(mask, 2) + " " + Long.toString(toCheck, 2);
 		}
 		mask = 1L << ret % 64;
 		while ( ( toCheck & mask) == 0 ) 
@@ -191,21 +193,24 @@ public class PosManager {
 	public static int getBlockAndCnt( long[] posData, long[][] blockList) 
 	{
 		int cnt = 0;
-		long[] initPos = new long[] {0,0};
 		int bitToFind = PosManager.BitCnt( posData );
+		long[] initPos = new long[] {0,0};
 		long restFishesLow = posData[0]; 
 		long restFishesHigh = posData[1]; 
 		while ( bitToFind > 0 )
 		{
 			int bitId = getNextFishPos( restFishesLow, restFishesHigh, 0);
 			PosManager.SetBit(initPos, bitId);
-			extendBlock( posData, blockList[cnt], initPos[0], initPos[1]);
+			extendBlock( posData, blockList[cnt], initPos[0], initPos[1] );
 			int bitFound = PosManager.BitCnt(blockList[cnt]);
 			assert bitFound > 0 : "Software Issue. A block must contain in minimum 1 fish, otherwise this is an endless loop.";
 			bitToFind -= bitFound; 
-			cnt++;
 			initPos[0] = 0;
 			initPos[1] = 0;
+			// switch off the block
+			restFishesLow ^= blockList[cnt][0];
+			restFishesHigh ^= blockList[cnt][1];
+			cnt++;
 		}
 		return cnt;
 	}
