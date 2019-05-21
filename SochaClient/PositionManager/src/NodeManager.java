@@ -146,13 +146,21 @@ public class NodeManager {
 		switch ( dir )
 		{
 			case 0: if ( ( newX = x + lth ) >= 10 ) return -1; 
+				break;
 			case 1: if ( ( newX = x + lth ) >= 10 || ( newY = y + lth ) >= 10 ) return -1;
+			    break;
 			case 2: if ( ( newY = y + lth ) >= 10 ) return -1;
+			    break;
 			case 3: if ( ( newX = x - lth ) < 0 || ( newY = y + lth ) >= 10 ) return -1;
-			case 4: if ( ( newX = x - lth ) < 0 ) return -1; 
+			    break;
+			case 4: if ( ( newX = x - lth ) < 0 ) return -1;
+			    break;
 			case 5: if ( ( newX = x - lth ) < 0 || ( newY = y - lth ) < 0 ) return -1;
-			case 6: if ( ( newY = y - lth ) < 0 ) return -1; 
+			    break;
+			case 6: if ( ( newY = y - lth ) < 0 ) return -1;
+			    break;
 			case 7: if ( ( newX = x + lth ) >= 10 || ( newY = y - lth ) < 0 ) return -1;
+			    break;
 		}
 		int newP = newY*10+newX;
 		long[] mask = MaskManager.moveMasks[dir][lth-1][newP];
@@ -210,6 +218,7 @@ public class NodeManager {
 	      				moves[moveCnt++] = PosManager.PackMove( y*10+x, newP);;
 				}
 			}
+			mask <<= 1;
 		}
 		return moveCnt;
 	}

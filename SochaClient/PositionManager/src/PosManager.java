@@ -138,7 +138,7 @@ public class PosManager {
 	}
 	public static int getNextFishPos( long low, long high, int currentPos )
 	{
-		int ret = currentPos;
+		int ret = currentPos+1;
 		long[] Data = new long[] { low, high };
 		long mask = 1L << ret % 64;
 		long toCheck = Data[ret / 64];
@@ -181,7 +181,7 @@ public class PosManager {
 		assert (newFishesLow > 0) || (newFishesHigh > 0) : "Software Issue - no new fishes found.";  
 		int bitCnt = Long.bitCount(newFishesLow) + Long.bitCount(newFishesHigh);
 		int bitPos = firstFishPos;
-		for( int k=0; k<bitCnt; k++)
+		for( int k=0; k < bitCnt; k++)
 		{
 			PosManager.SetBit(block, bitPos);
 			long foundNewFishesLow = MaskManager.neighborMasks[bitPos][0] & ( posData[0] ^ block[0] );
@@ -191,7 +191,8 @@ public class PosManager {
 				int firstPos = getNextFishPos(foundNewFishesLow, foundNewFishesHigh, 0);
 				extendBlock( posData, block, foundNewFishesLow, foundNewFishesHigh, firstPos );
 			}
-			bitPos = getNextFishPos(newFishesLow, newFishesHigh, bitPos);
+			if ( k+1 < bitCnt )
+				bitPos = getNextFishPos(newFishesLow, newFishesHigh, bitPos);
 		}
 	}
 	

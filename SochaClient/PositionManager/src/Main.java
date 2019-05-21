@@ -10,6 +10,26 @@ public class Main {
 	}
 	public static void testBlockAndValueCalculation(long[][] Pos)
 	{
+		int[] move = new int[1]; 
+		move[0] = PosManager.PackMove(new int[]{ 40, 44 });
+		NodeManager.movePosition(0, move, Pos, 0);
+/*
+		move[0] = PosManager.PackMove(new int[]{ 20, 43 });
+		NodeManager.movePosition(0, move, Pos, 0);
+
+		move[0] = PosManager.PackMove(new int[]{ 10, 42 });
+		NodeManager.movePosition(0, move, Pos, 0);
+
+		move[0] = PosManager.PackMove(new int[]{ 30, 41 });
+		NodeManager.movePosition(0, move, Pos, 0);
+
+		move[0] = PosManager.PackMove(new int[]{ 80, 61 });
+		NodeManager.movePosition(0, move, Pos, 0);
+
+		move[0] = PosManager.PackMove(new int[]{ 70, 52 });
+		NodeManager.movePosition(0, move, Pos, 0);
+*/
+		System.out.println(PosManager.ToString( Pos ));
 		long[][] blockList = new long[16][2]; 
 		
 		int blockCnt = PosManager.getBlockAndCnt(Pos[0], blockList);
@@ -23,7 +43,7 @@ public class Main {
 			System.out.println(PosManager.ToString( Pos1 ));
 		}
 	}
-	public static void main(String[] args) 
+	public static void main(String[] args) throws Exception 
 	{
 		// long test = 0B0111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111L;
 		MaskManager.initMasks(); /// !!! don't forget this !!! 
@@ -43,20 +63,13 @@ public class Main {
 				 );
 		// PosManager.DebugOut( Pos );
 		// String s = BigInteger.valueOf(move[0]).toString(2);
-		int[] move = new int[1]; 
-		move[0] = PosManager.PackMove(new int[]{ 40, 44 });
-		NodeManager.movePosition(0, move, Pos, 0);
-
-		move[0] = PosManager.PackMove(new int[]{ 20, 43 });
-		NodeManager.movePosition(0, move, Pos, 0);
-
-		move[0] = PosManager.PackMove(new int[]{ 10, 42 });
-		NodeManager.movePosition(0, move, Pos, 0);
-
-		move[0] = PosManager.PackMove(new int[]{ 30, 41 });
-		NodeManager.movePosition(0, move, Pos, 0);
-
-		System.out.println(PosManager.ToString( Pos ));
-		testBlockAndValueCalculation(Pos);
+		// testBlockAndValueCalculation(Pos);
+		int[] moves = new int[16*8];
+		int cnt = NodeManager.getMoveList(Pos, 0, moves);
+		for ( int i=0; i<cnt; i++)
+		{
+			System.out.println("move "+i + ":" + PosManager.packMoveToString(moves[i]));
+		}
+			
 	}
 }
