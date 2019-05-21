@@ -131,7 +131,9 @@ public class PosManager {
 		int val = 4;
 		while ( ( blockData[0] & MaskManager.fishValueMasks[val][0] ) == 0 && (blockData[1] & MaskManager.fishValueMasks[val][1]) == 0)
 			val--;
-		ret *= 8 << val;
+		long multiplier = val > 1 ? 8 : val;
+		for ( int i = 3; i <= val; i++ ) multiplier <<= 3;
+		ret *= multiplier;
 		return ret;
 	}
 	public static int getNextFishPos( long low, long high, int currentPos )
@@ -170,44 +172,47 @@ public class PosManager {
 	/**
 	 * Extend a block of fishes for a number of new fishes
 	 * @param posData      - posData fishes not in the block and not new for the current block
-	 * @param blockList    - fishes already considered for the block
+	 * @param blockList    - fishes already considered for the block / 0 = lowFishes - 1 = highFishes - 2 = maxValue 
 	 * @param newFishes    - new fishes for the current block
 	 * @return
 	 */
-	public static void extendBlock( long[]posData, long[]block, long newFishesLow, long newFishesHigh )
+	public static void extendBlock( long[]posData, long[]block, long newFishesLow, long newFishesHigh, int firstFishPos )
 	{
 		assert (newFishesLow > 0) || (newFishesHigh > 0) : "Software Issue - no new fishes found.";  
 		int bitCnt = Long.bitCount(newFishesLow) + Long.bitCount(newFishesHigh);
-		int bitPos = 0;
+		int bitPos = firstFishPos;
 		for( int k=0; k<bitCnt; k++)
 		{
-			bitPos = getNextFishPos(newFishesLow, newFishesHigh, bitPos);
 			PosManager.SetBit(block, bitPos);
 			long foundNewFishesLow = MaskManager.neighborMasks[bitPos][0] & ( posData[0] ^ block[0] );
 			long foundNewFishesHigh = MaskManager.neighborMasks[bitPos][1] & ( posData[1] ^ block[1] );
 			if ( Long.bitCount(foundNewFishesLow) > 0 || Long.bitCount(foundNewFishesHigh) > 0)
-				extendBlock( posData, block, foundNewFishesLow, foundNewFishesHigh );
+			{
+				int firstPos = getNextFishPos(foundNewFishesLow, foundNewFishesHigh, 0);
+				extendBlock( posData, block, foundNewFishesLow, foundNewFishesHigh, firstPos );
+			}
+			bitPos = getNextFishPos(newFishesLow, newFishesHigh, bitPos);
 		}
 	}
 	
 	public static int getBlockAndCnt( long[] posData, long[][] blockList) 
 	{
+		assert blockList.length >= 16 : "Software Issue. A blocklist can maximum contain 16 blocks.";
+		assert blockList[15].length >= 2 : "Software Issue. A blocklist hold the low and high long of the fishes.";
 		int cnt = 0;
 		int bitToFind = PosManager.BitCnt( posData );
-		long[] initPos = new long[] {0,0};
 		long restFishesLow = posData[0]; 
 		long restFishesHigh = posData[1]; 
 		while ( bitToFind > 0 )
 		{
+			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; // use existing storage instead ... long[] initPos = new long[] {0,0};
 			int bitId = getNextFishPos( restFishesLow, restFishesHigh, 0);
-			PosManager.SetBit(initPos, bitId);
-			extendBlock( posData, blockList[cnt], initPos[0], initPos[1] );
+			PosManager.SetBit(blockList[cnt], bitId); // use empty blocklist Storage to set the first fish of a block
+			extendBlock( posData, blockList[cnt], blockList[cnt][0], blockList[cnt][1], bitId );
 			int bitFound = PosManager.BitCnt(blockList[cnt]);
 			assert bitFound > 0 : "Software Issue. A block must contain in minimum 1 fish, otherwise this is an endless loop.";
 			bitToFind -= bitFound; 
-			initPos[0] = 0;
-			initPos[1] = 0;
-			// switch off the block
+			// switch off fishes found
 			restFishesLow ^= blockList[cnt][0];
 			restFishesHigh ^= blockList[cnt][1];
 			cnt++;
