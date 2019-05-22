@@ -141,50 +141,58 @@ public class NodeManager {
 	{
 		int newX=0;
 		int newY=0;
+		int p = y*10+x;
 		// goal - use less calculations as possible
 		int oppositeColor = (color + 1)  % 2;
+		// masks can't check regarding a board extension
 		switch ( dir )
 		{
 			case 0: if ( ( newX = x + lth ) >= 10 ) return -1; 
+				newY = y;
 				break;
 			case 1: if ( ( newX = x + lth ) >= 10 || ( newY = y + lth ) >= 10 ) return -1;
 			    break;
 			case 2: if ( ( newY = y + lth ) >= 10 ) return -1;
+				newX = x;
 			    break;
 			case 3: if ( ( newX = x - lth ) < 0 || ( newY = y + lth ) >= 10 ) return -1;
 			    break;
 			case 4: if ( ( newX = x - lth ) < 0 ) return -1;
+			    newY = y;
 			    break;
 			case 5: if ( ( newX = x - lth ) < 0 || ( newY = y - lth ) < 0 ) return -1;
 			    break;
 			case 6: if ( ( newY = y - lth ) < 0 ) return -1;
+				newX = x;
 			    break;
 			case 7: if ( ( newX = x + lth ) >= 10 || ( newY = y - lth ) < 0 ) return -1;
 			    break;
 		}
 		int newP = newY*10+newX;
-		long[] mask = MaskManager.moveMasks[dir][lth-1][newP];
+		long[] mask = MaskManager.moveMasks[dir][lth-1][p];
 		if ( lth > 1 )
 		{
 			// can't jump over opposite color fishes 
 			if ( ( ( mask[0] & positionData[oppositeColor][0] ) > 0 ) || 
-				 ( ( mask[1] & positionData[oppositeColor][1] ) > 0 ) ) 
+				 ( ( mask[1] & positionData[oppositeColor][1] ) > 0 ) )  
 			{
 				return -1;
 			}
 		}
-		// can't jump over or on crakes 
-		long[] maskFull =  MaskManager.moveMasks[dir][lth][newP];
-		if ( ( ( maskFull[0] & positionData[2][0] ) > 0 ) || 
-              ( ( maskFull[1] & positionData[2][1] ) > 0 ) ) 
-		{
-			return -1;
-		}
+		// can't jump over or on crakes - wrong - can jump over crakes 
+		long[] maskFull =  MaskManager.moveMasks[dir][lth][p];
+		//if ( ( ( maskFull[0] & positionData[2][0] ) > 0 ) || 
+        //      ( ( maskFull[1] & positionData[2][1] ) > 0 ) ) 
+		//{
+		//	return -1;
+		//}
 		maskFull[0] ^= mask[0];
 		maskFull[1] ^= mask[1];
-		// can't jump on my own fish
-		if ( ( ( mask[0] & positionData[color][0] ) > 0 ) || 
-			 ( ( mask[1] & positionData[color][1] ) > 0 ) ) 
+		// can't jump on my own fish or on crakes
+		if ( ( ( maskFull[0] & positionData[color][0] ) > 0 ) || 
+			 ( ( maskFull[1] & positionData[color][1] ) > 0 ) ||
+			 ( ( maskFull[0] & positionData[2][0] ) > 0 ) || 
+		     ( ( maskFull[1] & positionData[2][1] ) > 0 ) )  
 		{
 			return -1;
 		}
@@ -201,21 +209,21 @@ public class NodeManager {
 			long fish = positionData[color][highLong] & mask; 
 			if ( fish != 0 )
 			{
+				int x = p % 10;
+				int y = p / 10;
 				for ( int dir = 0; dir < 4; dir++ )
 				{
 					// count blue and red fishes in this direction
-					moveCnt = 
+					int moveLth = 
 						Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[0][0]) +
 						Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[0][1]) + 
 						Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[1][0]) +
 						Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[1][1]);
-					int x = p % 10;
-					int y = p / 10;
 					int newP;
-	      			if ( ( newP = movePossible( x, y, dir, moveCnt, positionData, color ) ) > -1 ) 
-	      				moves[moveCnt++] = PosManager.PackMove( y*10+x, newP);
-	      			if ( ( newP = movePossible( x, y, dir+4, moveCnt, positionData, color ) ) > -1 ) 
-	      				moves[moveCnt++] = PosManager.PackMove( y*10+x, newP);;
+	      			if ( ( newP = movePossible( x, y, dir, moveLth, positionData, color ) ) > -1 ) 
+	      				moves[moveCnt++] = PosManager.PackMove( p, newP);
+	      			if ( ( newP = movePossible( x, y, dir+4, moveLth, positionData, color ) ) > -1 ) 
+	      				moves[moveCnt++] = PosManager.PackMove( p, newP);;
 				}
 			}
 			mask <<= 1;

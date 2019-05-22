@@ -110,12 +110,13 @@ public class PosManager {
 	}
 	public static String PosToString( int p )
 	{
-		return new String(p%10 + "," + p/10);
+		int val = (int)'a';
+		return new String(String.valueOf((char)(val+p%10) + String.valueOf(p/10)));
 	}
 	public static String packMoveToString( int move )
 	{
 		int[] moves =  getYX( move );
-		String res = new String("from:"+PosToString(moves[0])+","+PosToString(moves[1])); 
+		String res = new String("from: "+PosToString(moves[0])+";"+PosToString(moves[1])); 
 		return res;		
 	}
 	public static int PackMove( int moveFrom, int moveTo )

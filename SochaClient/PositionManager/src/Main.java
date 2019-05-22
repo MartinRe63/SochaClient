@@ -8,12 +8,15 @@ public class Main {
 	        System.arraycopy(aSource[i], 0, aDestination[i], 0, aSource[i].length);
 	    }
 	}
-	public static void testBlockAndValueCalculation(long[][] Pos)
+	public static void setTestPosition1(long[][] Pos)
 	{
 		int[] move = new int[1]; 
 		move[0] = PosManager.PackMove(new int[]{ 40, 44 });
 		NodeManager.movePosition(0, move, Pos, 0);
-/*
+	}
+	public static void setTestPosition2(long[][] Pos)
+	{
+		int[] move = new int[1]; 
 		move[0] = PosManager.PackMove(new int[]{ 20, 43 });
 		NodeManager.movePosition(0, move, Pos, 0);
 
@@ -28,10 +31,14 @@ public class Main {
 
 		move[0] = PosManager.PackMove(new int[]{ 70, 52 });
 		NodeManager.movePosition(0, move, Pos, 0);
-*/
+		
+	}
+	public static void testBlockAndValueCalculation(long[][] Pos)
+	{
 		System.out.println(PosManager.ToString( Pos ));
 		long[][] blockList = new long[16][2]; 
-		
+		setTestPosition1( Pos );
+		setTestPosition2( Pos );
 		int blockCnt = PosManager.getBlockAndCnt(Pos[0], blockList);
 		long [][] Pos1 = new long[3][2];
 		for ( int i=0; i < blockCnt; i++)
@@ -42,6 +49,40 @@ public class Main {
 			System.out.println("BlockValue=" + PosManager.blockValue(blockList[i]));
 			System.out.println(PosManager.ToString( Pos1 ));
 		}
+	}
+	
+	public static void testMoveCalculation(long[][] Pos ) throws Exception
+	{
+		int[] moves = new int[16*8];
+		setTestPosition1(Pos);
+		setTestPosition2(Pos);
+		System.out.println(PosManager.ToString( Pos ));
+		
+        ElapsedTimer t = new ElapsedTimer();
+		int cnt = NodeManager.getMoveList(Pos, 0, moves);
+		System.out.println(t);
+		
+		for ( int i=0; i<cnt; i++)
+		{
+			System.out.println("move "+i + ":" + PosManager.packMoveToString(moves[i]));
+		}
+		System.out.println("");
+		
+		t = new ElapsedTimer();
+		cnt = NodeManager.getMoveList(Pos, 1, moves);
+		System.out.println(t);
+		
+		for ( int i=0; i<cnt; i++)
+		{
+			System.out.println("move "+i + ":" + PosManager.packMoveToString(moves[i]));
+		}
+		System.out.println(t);
+	}
+	
+	public static void playSimpleGame(long[][] Pos) 
+	{
+		int[] moves = new int[16*8];
+		
 	}
 	public static void main(String[] args) throws Exception 
 	{
@@ -64,12 +105,7 @@ public class Main {
 		// PosManager.DebugOut( Pos );
 		// String s = BigInteger.valueOf(move[0]).toString(2);
 		// testBlockAndValueCalculation(Pos);
-		int[] moves = new int[16*8];
-		int cnt = NodeManager.getMoveList(Pos, 0, moves);
-		for ( int i=0; i<cnt; i++)
-		{
-			System.out.println("move "+i + ":" + PosManager.packMoveToString(moves[i]));
-		}
+		testMoveCalculation(Pos);
 			
 	}
 }
