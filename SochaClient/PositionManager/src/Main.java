@@ -79,10 +79,49 @@ public class Main {
 		System.out.println(t);
 	}
 	
-	public static void playSimpleGame(long[][] Pos) 
+	public static int simpleGetBestMoveId(long[][] pos, int color, int[] moves) throws Exception
+	{
+		long [][] pos1 = new long[3][2];
+		int blockCnt; 
+		long[][] blockList = new long[16][2]; 
+		int maxValue = 0;
+		int bestMoveId = 0;
+		int cnt = NodeManager.getMoveList(pos, color, moves);
+		int posValue = 0;
+		for ( int k=0; k < cnt; k++ )
+		{
+			arrayCopy(pos, pos1);
+			NodeManager.movePosition(k, moves, pos1, color);
+			// System.out.println(PosManager.ToString( pos1 ));
+			blockCnt = PosManager.getBlockAndCnt(pos1[color], blockList);
+			posValue = 0;
+			for ( int i = 0; i < blockCnt; i++)
+			{
+				posValue += PosManager.blockValue(blockList[i]);
+			}
+			if (posValue > maxValue)
+			{
+				maxValue = posValue; 
+				bestMoveId = k;
+			}
+		}
+		return bestMoveId;
+	}
+	public static void playSimpleGame(long[][] pos) throws Exception 
 	{
 		int[] moves = new int[16*8];
-		
+		int finalResultCheck = 0;
+		boolean winnerFound = false;
+		while ( ! winnerFound && finalResultCheck < 30 )
+		{
+			for ( int color = 0; color < 2; color++ )
+			{
+				int k = simpleGetBestMoveId( pos, color, moves );
+				NodeManager.movePosition(k, moves, pos, color);
+				System.out.println(PosManager.ToString( pos ));
+			}
+			finalResultCheck++;
+		}
 	}
 	public static void main(String[] args) throws Exception 
 	{
@@ -105,7 +144,8 @@ public class Main {
 		// PosManager.DebugOut( Pos );
 		// String s = BigInteger.valueOf(move[0]).toString(2);
 		// testBlockAndValueCalculation(Pos);
-		testMoveCalculation(Pos);
+		// testMoveCalculation(Pos);
+		playSimpleGame(Pos);
 			
 	}
 }

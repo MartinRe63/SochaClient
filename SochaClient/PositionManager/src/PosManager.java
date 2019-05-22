@@ -148,7 +148,13 @@ public class PosManager {
 			mask <<= 1;
 			ret ++;
 		}
-		mask = 255L << ret; // (8 bit mask)
+		if ( ( toCheck & mask ) != 0 )
+			return ret;
+		if ( ret == 64 )
+		{
+			toCheck = Data[ 1 ];
+		}
+		mask = 255L << ret ; // (8 bit mask)
 		String s = "";
 		while ( ( toCheck & mask ) == 0 )
 		{
@@ -159,7 +165,8 @@ public class PosManager {
 				toCheck = Data[ret / 64];
 				mask = 255L;
 			}
-			s = Long.toString(mask, 2) + " " + Long.toString(toCheck, 2);
+			// s = Long.toString(mask, 2) + " " + Long.toString(toCheck, 2);
+			assert ret < 128 : "Stop endless loop - an error occured - something went wrong."; 
 		}
 		mask = 1L << ret % 64;
 		while ( ( toCheck & mask) == 0 ) 
@@ -179,7 +186,7 @@ public class PosManager {
 	 */
 	public static void extendBlock( long[]posData, long[]block, long newFishesLow, long newFishesHigh, int firstFishPos )
 	{
-		assert (newFishesLow > 0) || (newFishesHigh > 0) : "Software Issue - no new fishes found.";  
+		assert (newFishesLow != 0) || (newFishesHigh != 0) : "Software Issue - no new fishes found.";  
 		int bitCnt = Long.bitCount(newFishesLow) + Long.bitCount(newFishesHigh);
 		int bitPos = firstFishPos;
 		for( int k=0; k < bitCnt; k++)
@@ -189,7 +196,8 @@ public class PosManager {
 			long foundNewFishesHigh = MaskManager.neighborMasks[bitPos][1] & ( posData[1] ^ block[1] );
 			if ( Long.bitCount(foundNewFishesLow) > 0 || Long.bitCount(foundNewFishesHigh) > 0)
 			{
-				int firstPos = getNextFishPos(foundNewFishesLow, foundNewFishesHigh, 0);
+				// current Pos is minus 1 to ensure, that bit 0 is considered
+				int firstPos = getNextFishPos(foundNewFishesLow, foundNewFishesHigh, -1);
 				extendBlock( posData, block, foundNewFishesLow, foundNewFishesHigh, firstPos );
 			}
 			if ( k+1 < bitCnt )
@@ -208,7 +216,7 @@ public class PosManager {
 		while ( bitToFind > 0 )
 		{
 			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; // use existing storage instead ... long[] initPos = new long[] {0,0};
-			int bitId = getNextFishPos( restFishesLow, restFishesHigh, 0);
+			int bitId = getNextFishPos( restFishesLow, restFishesHigh, -1);
 			PosManager.SetBit(blockList[cnt], bitId); // use empty blocklist Storage to set the first fish of a block
 			extendBlock( posData, blockList[cnt], blockList[cnt][0], blockList[cnt][1], bitId );
 			int bitFound = PosManager.BitCnt(blockList[cnt]);
