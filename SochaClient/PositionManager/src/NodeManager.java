@@ -137,7 +137,7 @@ public class NodeManager {
 			PosManager.ClearBit(positionData[(color+1)%2], moveTo );
 			
 	}
-	public static int movePossible( int x, int y, int dir, int lth, long[][]positionData, int color )
+	private static int movePossible( int x, int y, int dir, int lth, long[][]positionData, int color, long[]superlong )
 	{
 		int newX=0;
 		int newY=0;
@@ -173,26 +173,27 @@ public class NodeManager {
 		if ( lth > 1 )
 		{
 			// can't jump over opposite color fishes 
-			if ( ( ( mask[0] & positionData[oppositeColor][0] ) > 0 ) || 
-				 ( ( mask[1] & positionData[oppositeColor][1] ) > 0 ) )  
+			if ( ( ( mask[0] & positionData[oppositeColor][0] ) != 0 ) || 
+				 ( ( mask[1] & positionData[oppositeColor][1] ) != 0 ) )  
 			{
 				return -1;
 			}
 		}
-		// can't jump over or on crakes - wrong - can jump over crakes 
-		long[] maskFull =  MaskManager.moveMasks[dir][lth][p];
+		// can't jump over or on crakes - wrong - can jump over crakes
+		superlong[0] = MaskManager.moveMasks[dir][lth][p][0];
+		superlong[1] = MaskManager.moveMasks[dir][lth][p][1];
 		//if ( ( ( maskFull[0] & positionData[2][0] ) > 0 ) || 
         //      ( ( maskFull[1] & positionData[2][1] ) > 0 ) ) 
 		//{
 		//	return -1;
 		//}
-		maskFull[0] ^= mask[0];
-		maskFull[1] ^= mask[1];
+		superlong[0] ^= mask[0];
+		superlong[1] ^= mask[1];
 		// can't jump on my own fish or on crakes
-		if ( ( ( maskFull[0] & positionData[color][0] ) > 0 ) || 
-			 ( ( maskFull[1] & positionData[color][1] ) > 0 ) ||
-			 ( ( maskFull[0] & positionData[2][0] ) > 0 ) || 
-		     ( ( maskFull[1] & positionData[2][1] ) > 0 ) )  
+		if ( ( ( superlong[0] & positionData[color][0] ) != 0 ) || 
+			 ( ( superlong[1] & positionData[color][1] ) != 0 ) ||
+			 ( ( superlong[0] & positionData[2][0] ) != 0 ) || 
+		     ( ( superlong[1] & positionData[2][1] ) != 0 ) )  
 		{
 			return -1;
 		}
@@ -203,6 +204,7 @@ public class NodeManager {
 		long mask = 1L;
 		int highLong = 0;
 		int moveCnt = 0;
+		long[] long128 = new long[2];
 		for( int p = 0; p < 100; p++ )
 		{
 			if (mask == 0 ) { mask = 1L; highLong++; }
@@ -220,9 +222,9 @@ public class NodeManager {
 						Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[1][0]) +
 						Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[1][1]);
 					int newP;
-	      			if ( ( newP = movePossible( x, y, dir, moveLth, positionData, color ) ) > -1 ) 
+	      			if ( ( newP = movePossible( x, y, dir, moveLth, positionData, color, long128 ) ) > -1 ) 
 	      				moves[moveCnt++] = PosManager.PackMove( p, newP);
-	      			if ( ( newP = movePossible( x, y, dir+4, moveLth, positionData, color ) ) > -1 ) 
+	      			if ( ( newP = movePossible( x, y, dir+4, moveLth, positionData, color, long128 ) ) > -1 ) 
 	      				moves[moveCnt++] = PosManager.PackMove( p, newP);;
 				}
 			}

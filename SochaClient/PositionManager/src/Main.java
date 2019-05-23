@@ -118,6 +118,7 @@ public class Main {
 			{
 				int k = simpleGetBestMoveId( pos, color, moves );
 				NodeManager.movePosition(k, moves, pos, color);
+				System.out.println(PosManager.packMoveToString(moves[k]));
 				System.out.println(PosManager.ToString( pos ));
 			}
 			finalResultCheck++;
