@@ -229,5 +229,62 @@ public class PosManager {
 		}
 		return cnt;
 	}
+	/**
+	 * check if the end is reached (available moves checked afterwards) and if yes the result
+	 * @param blockListAll
+	 * @param pos
+	 * @return
+	 * -1 : End not reached
+	 * 0 : End reached -> Winner is blue
+	 * 1 : End reached -> Winner is red
+	 * 0.5 : End reached -> no Winner
+	 */
+	public static double Analysis( int moveCnt, long[][][] blockListAll, int[] blockCount, long[][] pos )
+	{
+		boolean roundEnd = moveCnt % 2 == 0 && moveCnt > 0;
+		boolean gameEnd = moveCnt >= 60 || blockCount[0] == 1 || blockCount[1] == 1;
+
+		if ( gameEnd || roundEnd )
+		{
+			if ( blockCount[0] == 1 && blockCount[1] == 1 )
+				return 0.5;
+			else if ( blockCount[0] == 1)
+				return 1;
+			else if ( blockCount[1] == 1)
+				return 0;
+			
+		}
+		if ( gameEnd )
+		{
+			int maxRed = 0; int maxBlue = 0; int cnt;
+			for( int k = 0; k <= blockCount[0]; k++)
+				if ( ( cnt = ( Long.bitCount(blockListAll[0][k][0]) + Long.bitCount(blockListAll[0][k][1]) ) ) > maxRed )
+				{
+					maxRed = cnt;
+				}
+			for( int k = 0; k <= blockCount[0]; k++)
+				if ( ( cnt = ( Long.bitCount(blockListAll[1][k][0]) + Long.bitCount(blockListAll[1][k][1]) ) ) > maxBlue )
+				{
+					maxBlue = cnt;
+				}
+			if ( maxRed == maxBlue )
+				return 0.5;
+			else if ( maxRed > maxBlue )
+				return 1;
+			else 
+				return 0;
+		}
+		return -1;
+	}
+	public static String AnalysisToString( double val )
+	{
+		String ret = "The winner is ";
+		if ( val == 1.0 )
+			return ret + "red"; 
+		else if ( val == 0.0)
+			return ret + "blue";
+		else
+			return "The game ends unentschieden.";
+	}
 
 }

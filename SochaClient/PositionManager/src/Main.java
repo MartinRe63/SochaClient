@@ -79,11 +79,9 @@ public class Main {
 		System.out.println(t);
 	}
 	
-	public static int simpleGetBestMoveId(long[][] pos, int color, int[] moves) throws Exception
+	public static int simpleGetBestMoveId(long[][] pos, int color, int[] moves, long[][][]blockList, int[] blockCnt) throws Exception
 	{
 		long [][] pos1 = new long[3][2];
-		int blockCnt; 
-		long[][] blockList = new long[16][2]; 
 		int maxValue = 0;
 		int bestMoveId = 0;
 		int cnt = NodeManager.getMoveList(pos, color, moves);
@@ -93,11 +91,11 @@ public class Main {
 			arrayCopy(pos, pos1);
 			NodeManager.movePosition(k, moves, pos1, color);
 			// System.out.println(PosManager.ToString( pos1 ));
-			blockCnt = PosManager.getBlockAndCnt(pos1[color], blockList);
+			blockCnt[color] = PosManager.getBlockAndCnt(pos1[color], blockList[color]);
 			posValue = 0;
-			for ( int i = 0; i < blockCnt; i++)
+			for ( int i = 0; i < blockCnt[color]; i++)
 			{
-				posValue += PosManager.blockValue(blockList[i]);
+				posValue += PosManager.blockValue(blockList[color][i]);
 			}
 			if (posValue > maxValue)
 			{
@@ -105,25 +103,36 @@ public class Main {
 				bestMoveId = k;
 			}
 		}
+		// 
+		// fill the blocklist with the best block for later analysis
+		// approach with note analysis: return the analysis result here
+		// 
+		arrayCopy(pos, pos1);
+		NodeManager.movePosition(bestMoveId, moves, pos1, color);
+		blockCnt[color] = PosManager.getBlockAndCnt(pos1[color], blockList[color]);
 		return bestMoveId;
 	}
 	public static void playSimpleGame(long[][] pos) throws Exception 
 	{
-		int[] moves = new int[16*8];
-		int finalResultCheck = 0;
-		boolean winnerFound = false;
-		while ( ! winnerFound && finalResultCheck < 30 )
+		int[] moves = new int[16*8]; 				// DIM: moveId
+		long[][][] blockList = new long[2][16][2]; 	// DIM: Color, BlockId, HL
+		int[] blockCnt = new int[2]; 				// DIM: Color
+		int moveCnt = 0;
+		double result;
+		while ( ( result = PosManager.Analysis(moveCnt, blockList, blockCnt, pos) ) < 0  )
 		{
 			for ( int color = 0; color < 2; color++ )
 			{
-				int k = simpleGetBestMoveId( pos, color, moves );
+				int k = simpleGetBestMoveId( pos, color, moves, blockList, blockCnt );
 				NodeManager.movePosition(k, moves, pos, color);
 				System.out.println(PosManager.packMoveToString(moves[k]));
 				System.out.println(PosManager.ToString( pos ));
+				moveCnt++;
 			}
-			finalResultCheck++;
 		}
+		System.out.println( PosManager.AnalysisToString(result) );
 	}
+	
 	public static void main(String[] args) throws Exception 
 	{
 		// long test = 0B0111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111L;

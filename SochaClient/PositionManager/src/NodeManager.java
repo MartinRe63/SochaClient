@@ -182,8 +182,8 @@ public class NodeManager {
 		// can't jump over or on crakes - wrong - can jump over crakes
 		superlong[0] = MaskManager.moveMasks[dir][lth][p][0];
 		superlong[1] = MaskManager.moveMasks[dir][lth][p][1];
-		//if ( ( ( maskFull[0] & positionData[2][0] ) > 0 ) || 
-        //      ( ( maskFull[1] & positionData[2][1] ) > 0 ) ) 
+		//if ( ( ( maskFull[0] & positionData[2][0] ) != 0 ) || 
+        //      ( ( maskFull[1] & positionData[2][1] ) != 0 ) ) 
 		//{
 		//	return -1;
 		//}
