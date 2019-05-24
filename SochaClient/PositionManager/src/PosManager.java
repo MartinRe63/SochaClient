@@ -116,7 +116,7 @@ public class PosManager {
 	public static String packMoveToString( int move )
 	{
 		int[] moves =  getYX( move );
-		String res = new String("from: "+PosToString(moves[0])+";"+PosToString(moves[1])); 
+		String res = new String(PosToString(moves[0])+"->"+PosToString(moves[1])); 
 		return res;		
 	}
 	public static int PackMove( int moveFrom, int moveTo )
@@ -125,7 +125,14 @@ public class PosManager {
 		return PackMove(move);
 	}
 	
-	
+
+	public static int moveValue (int move )
+	{
+		int mask = 15 << 8;
+		int toX = ( move & mask ) >> 8; mask <<= 4;
+		int toY = ( move & mask ) >> 12; 
+		return ( toX >= 5 ? 9-toX : toX ) * (toY >=5 ? 9-toY : toY);  
+	}
 	public static long blockValue ( long[] blockData )
 	{
 		long ret = Long.bitCount(blockData[0]) + Long.bitCount(blockData[1]);

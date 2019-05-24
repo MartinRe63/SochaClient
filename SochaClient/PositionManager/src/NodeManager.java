@@ -11,13 +11,16 @@ public class NodeManager {
     static double epsilon = (float) 1e-6;
 	
 	long crake[] = new long[2];
+	// node properties
 	int[] fishMove;
-	long[] visitCnts;
+	long[] visits;
 	float[] totalValue;
+	int childListPos[];
+	
 	int myColor = 0; // 0 = red
 	int secondMoveColor = 1;
-	int childListPos[];
-	int childArr[];	
+	int childArr[];
+	int moveList[] = new int[16*8]; // used temporary during node expansion
 	IntListManager ilm;
 	LongFreeArrayManager lfam;
 	
@@ -50,7 +53,7 @@ public class NodeManager {
 	{
 		// values of a node
 		fishMove = new int[NodeCount];
-		visitCnts = new long[NodeCount];
+		visits = new long[NodeCount];
 		totalValue = new float[NodeCount]; 
 		childListPos = new int[NodeCount];
 		
@@ -59,7 +62,7 @@ public class NodeManager {
 		
 		myColor = MyColor;
 		ilm = new IntListManager(childArr, 10);
-		lfam = new LongFreeArrayManager(visitCnts);
+		lfam = new LongFreeArrayManager(visits);
 		firstNode = lfam.ReserveNextFree();
 	
 		if ( startSelectThread )
@@ -68,14 +71,30 @@ public class NodeManager {
 			thread.start();
 		}
 	}
-	public boolean hasChilds( int nodeId ) throws Exception
+	public boolean hasChilds( int nodeId ) 
 	{
-		if ( lfam.IsFree( nodeId )) throw new Exception("Software Issue - Node is not available.");
+		assert ! lfam.IsFree( nodeId ) : "Software Issue - Node is not available.";
 		return childListPos[nodeId] != -1;
+	}
+	public void initNode ( int nodeId, int move )
+	{
+		childListPos[nodeId] = -1;
+		totalValue[nodeId] = 0;
+		visits[nodeId] = 0;
+		fishMove[nodeId] = move;
 	}
 	public void expandNode( int nodeId, int moveColor, long[][]position ) throws Exception
 	{
-		if ( lfam.IsFree( nodeId )) throw new Exception("Software Issue - Node is not available.");
+		assert ! lfam.IsFree( nodeId ) : "Software Issue - Node is not available.";
+		int childListP = childListPos[nodeId]; 
+		assert childListP == -1 : "Software Issue - Childs available.";
+        childListP = ilm.ReserveList(); 
+        int moveCnt = NodeManager.getMoveList(position, moveColor, moveList);
+        for (int i=0; i<moveCnt; i++) {
+            int childNodeId;
+            ilm.Add(i, childNodeId = lfam.ReserveNextFree()); // children[i] = new TreeNode();
+            initNode( childNodeId, moveList[i] );
+        }
 		
 		// fill the childList with valid moves based on the current position
 		
@@ -89,7 +108,7 @@ public class NodeManager {
 	}
 	public void updateStat( int nodeId, double value )
 	{
-		visitCnts[nodeId]++;
+		visits[nodeId]++;
 		totalValue[nodeId] += (float)value;
 	}
 
@@ -101,12 +120,12 @@ public class NodeManager {
 	    int len = ilm.GetLength(childList);
 	    for (int k = 0; k < len; k++ ) {
 	    	int childNodeId = ilm.GetItem(childList, k);
-	    	double childVisits = visitCnts[childNodeId];
+	    	double childVisits = visits[childNodeId];
 	    	double totValue;
 	        double uctValue =
 	        		((totValue = totalValue[childNodeId]) / (childVisits + epsilon) +
 			Math.sqrt(Math.log(childVisits+1) / (childVisits + epsilon)) +
-			r.nextDouble() * epsilon);
+			r.nextDouble() * epsilon + fishMove[childNodeId] * epsilon);
 	        // small random number to break ties randomly in unexpanded nodes
 	        System.out.println("UCT value = " + uctValue + "  tot = " + totValue);
 	        if (uctValue > bestValue) {
