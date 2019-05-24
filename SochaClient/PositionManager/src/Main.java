@@ -3,11 +3,6 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class Main {
-	public static void arrayCopy(long[][] aSource, long[][] aDestination) {
-	    for (int i = 0; i < aSource.length; i++) {
-	        System.arraycopy(aSource[i], 0, aDestination[i], 0, aSource[i].length);
-	    }
-	}
 	public static void setTestPosition1(long[][] Pos)
 	{
 		int[] move = new int[1]; 
@@ -43,7 +38,7 @@ public class Main {
 		long [][] Pos1 = new long[3][2];
 		for ( int i=0; i < blockCnt; i++)
 		{
-			arrayCopy(Pos,Pos1);
+			PosManager.arrayCopy(Pos,Pos1);
 			Pos1[0][0] &= blockList[i][0];
 			Pos1[0][1] &= blockList[i][1];
 			System.out.println("BlockValue=" + PosManager.blockValue(blockList[i]));
@@ -78,26 +73,20 @@ public class Main {
 		}
 		System.out.println(t);
 	}
-	
+
 	public static int simpleGetBestMoveId(long[][] pos, int color, int[] moves, long[][][]blockList, int[] blockCnt) throws Exception
 	{
 		long [][] pos1 = new long[3][2];
-		int maxValue = 0;
+		long maxValue = 0;
 		int bestMoveId = 0;
 		int cnt = NodeManager.getMoveList(pos, color, moves);
-		int posValue = 0;
+		long posValue = 0;
 		for ( int k=0; k < cnt; k++ )
 		{
-			arrayCopy(pos, pos1);
+			PosManager.arrayCopy(pos, pos1);
 			NodeManager.movePosition(k, moves, pos1, color);
-			// System.out.println(PosManager.ToString( pos1 ));
-			blockCnt[color] = PosManager.getBlockAndCnt(pos1[color], blockList[color]);
-			posValue = 0;
-			for ( int i = 0; i < blockCnt[color]; i++)
-			{
-				posValue += PosManager.blockValue(blockList[color][i]);
-			}
-			if (posValue > maxValue)
+
+			if ( ( posValue = PosManager.getPosValue( pos1, color, moves, k, blockList, blockCnt ) ) > maxValue)
 			{
 				maxValue = posValue; 
 				bestMoveId = k;
@@ -107,7 +96,7 @@ public class Main {
 		// fill the blocklist with the best block for later analysis
 		// approach with note analysis: return the analysis result here
 		// 
-		arrayCopy(pos, pos1);
+		PosManager.arrayCopy(pos, pos1);
 		NodeManager.movePosition(bestMoveId, moves, pos1, color);
 		blockCnt[color] = PosManager.getBlockAndCnt(pos1[color], blockList[color]);
 		return bestMoveId;
@@ -155,7 +144,16 @@ public class Main {
 		// String s = BigInteger.valueOf(move[0]).toString(2);
 		// testBlockAndValueCalculation(Pos);
 		// testMoveCalculation(Pos);
-		playSimpleGame(Pos);
-			
+		// playSimpleGame(Pos);
+		
+        ElapsedTimer t = new ElapsedTimer();
+		NodeManager nm = new NodeManager(1000000, 0, 0, Pos, false);
+		for ( int k = 0; k < 10000; k++)
+		{
+			nm.selectAction(true);
+			// System.out.println( nm.LastPositionToString() );
+		}
+		System.out.println(PosManager.packMoveToString(nm.BestMove()));
+		System.out.println(t);
 	}
 }

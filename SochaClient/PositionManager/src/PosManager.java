@@ -1,6 +1,11 @@
 import java.math.BigInteger;
 
 public class PosManager {
+	public static void arrayCopy(long[][] aSource, long[][] aDestination) {
+	    for (int i = 0; i < aSource.length; i++) {
+	        System.arraycopy(aSource[i], 0, aDestination[i], 0, aSource[i].length);
+	    }
+	}
 	static void SetBit( long[] pos, int bitId )
 	{
 		if ( bitId < 64 )
@@ -294,4 +299,16 @@ public class PosManager {
 			return "The game ends unentschieden.";
 	}
 
+	public static long getPosValue(long[][] pos, int color, int[] moves, int moveId, long[][][]blockList, int[] blockCnt)
+	{
+		// System.out.println(PosManager.ToString( pos1 ));
+		blockCnt[color] = PosManager.getBlockAndCnt(pos[color], blockList[color]);
+		long posValue = 0;
+		for ( int i = 0; i < blockCnt[color]; i++)
+		{
+			posValue += PosManager.blockValue(blockList[color][i]);
+		}
+		return posValue;
+	}
 }
+
