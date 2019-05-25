@@ -86,7 +86,7 @@ public class Main {
 			PosManager.arrayCopy(pos, pos1);
 			NodeManager.movePosition(k, moves, pos1, color);
 
-			if ( ( posValue = PosManager.getPosValue( pos1, color, moves, k, blockList, blockCnt ) ) > maxValue)
+			if ( ( posValue = PosManager.getPosValue( pos1, color, blockList, blockCnt ) ) > maxValue)
 			{
 				maxValue = posValue; 
 				bestMoveId = k;
@@ -108,7 +108,7 @@ public class Main {
 		int[] blockCnt = new int[2]; 				// DIM: Color
 		int moveCnt = 0;
 		double result;
-		while ( ( result = PosManager.Analysis(moveCnt, blockList, blockCnt, pos) ) < 0  )
+		while ( ( result = PosManager.Analysis(moveCnt, blockList, blockCnt, pos, 60-moveCnt) ) < 0  )
 		{
 			for ( int color = 0; color < 2; color++ )
 			{
@@ -147,13 +147,60 @@ public class Main {
 		// playSimpleGame(Pos);
 		
         ElapsedTimer t = new ElapsedTimer();
-		NodeManager nm = new NodeManager(1000000, 0, 0, Pos, false);
-		for ( int k = 0; k < 10000; k++)
+        
+		NodeManager redNM = null;
+		NodeManager blueNM = null;
+		int redMove = 0;
+		int blueMove = 0; 
+		int moveCnt = 0;
+		
+		long[][][] blockList = new long[2][16][2]; 	// DIM: Color, BlockId, HL
+		int[] blockCnt = new int[2]; 				// DIM: Color
+
+		try 
 		{
-			nm.selectAction(true);
-			// System.out.println( nm.LastPositionToString() );
+			while ( true )
+			{
+				if ( redNM == null ) 
+					redNM = new NodeManager(1000000, 0, Pos, false, 0);
+				else 
+					redNM.SelectMoves( redMove, blueMove );
+					
+				for ( int k = 0; k < 10000; k++)
+				{
+					redNM.selectAction(true);
+					// System.out.println( nm.LastPositionToString() );
+				}
+		
+				NodeManager.movePosition( ( redMove = redNM.BestMove() ) , Pos, 0);
+				System.out.println(PosManager.packMoveToString( redMove ));
+				System.out.println(PosManager.ToString(Pos));
+				
+				if ( blueNM == null )
+					blueNM = new NodeManager(1000000, 1, Pos, false, 1);
+				else
+					blueNM.SelectMoves( blueMove, redMove );
+				for ( int k = 0; k < 10000; k++)
+				{
+					blueNM.selectAction(true);
+					// System.out.println( nm.LastPositionToString() );
+				}
+				
+				NodeManager.movePosition( ( blueMove = blueNM.BestMove() ), Pos, 1);
+				System.out.println(PosManager.packMoveToString( blueMove ));
+				System.out.println(PosManager.ToString(Pos));
+				
+				moveCnt += 2;
+				PosManager.GetValue(Pos, moveCnt, blockList, blockCnt, 1, 0);
+			}
 		}
-		System.out.println(PosManager.packMoveToString(nm.BestMove()));
+		catch ( PosManager.GameEndException e )
+		{
+			if ( e.res == 1.0 )
+				System.out.println( "Blau hat gewonnen. ");
+			else
+				System.out.println( "Rot hat gewonnen. ");
+		}
 		System.out.println(t);
 	}
 }

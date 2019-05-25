@@ -35,7 +35,7 @@ public class LongFreeArrayManager {
 	}
 	public void Dispose( int Index ) throws Exception
 	{
-		if ( IsFree( Index ) ) throw new Exception("Element at Index:" + Index + "is already disposed.");
+		if ( IsFree( Index ) ) throw new Exception("Element at Index: " + Index + " is already disposed.");
 		toManageOn[Index] = freeMask ^ (long)firstFree;
 		firstFree = Index;
 		reservedBlockCnt--;

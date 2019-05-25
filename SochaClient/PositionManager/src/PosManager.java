@@ -1,6 +1,15 @@
 import java.math.BigInteger;
 
 public class PosManager {
+	public static class GameEndException extends Exception
+	{
+		public double res;
+		GameEndException( double Result ) {
+			super("Game End to be catched.");
+			res = Result;
+		}
+	}
+	
 	public static void arrayCopy(long[][] aSource, long[][] aDestination) {
 	    for (int i = 0; i < aSource.length; i++) {
 	        System.arraycopy(aSource[i], 0, aDestination[i], 0, aSource[i].length);
@@ -251,10 +260,10 @@ public class PosManager {
 	 * 1 : End reached -> Winner is red
 	 * 0.5 : End reached -> no Winner
 	 */
-	public static double Analysis( int moveCnt, long[][][] blockListAll, int[] blockCount, long[][] pos )
+	public static double Analysis( int moveCnt, long[][][] blockListAll, int[] blockCount, long[][] pos, int MaxDepth )
 	{
 		boolean roundEnd = moveCnt % 2 == 0 && moveCnt > 0;
-		boolean gameEnd = moveCnt >= 60 || blockCount[0] == 1 || blockCount[1] == 1;
+		boolean gameEnd = moveCnt >= MaxDepth || ( roundEnd && ( blockCount[0] == 1 || blockCount[1] == 1 ) );
 
 		if ( gameEnd || roundEnd )
 		{
@@ -274,7 +283,7 @@ public class PosManager {
 				{
 					maxRed = cnt;
 				}
-			for( int k = 0; k <= blockCount[0]; k++)
+			for( int k = 0; k <= blockCount[1]; k++)
 				if ( ( cnt = ( Long.bitCount(blockListAll[1][k][0]) + Long.bitCount(blockListAll[1][k][1]) ) ) > maxBlue )
 				{
 					maxBlue = cnt;
@@ -288,6 +297,33 @@ public class PosManager {
 		}
 		return -1;
 	}
+
+	public static double factor = 0.3 / (512*16); 
+	
+	public static double GetValue( long[][]pos, int color, long[][][] blockList, int[] blockCnt, int depth, int firstMoveDepth ) throws GameEndException
+	{
+		// calculate the value of this position
+		// here to count number of blocks and calculate the block value
+		// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
+		long valColor = PosManager.getPosValue( pos, color, blockList, blockCnt );
+		long valOppositeColor = PosManager.getPosValue( pos, (color+1) % 2, blockList, blockCnt );
+		double ret;
+		// foundGameEnd = false;
+		if ( ( ret = PosManager.Analysis(depth, blockList, blockCnt, pos, 60-firstMoveDepth) ) < 0 )
+		{
+			ret  = ( valColor - valOppositeColor ) * factor + 0.5;
+		}
+		else 
+		{
+			// foundGameEnd = true;
+			if ( color == 1 )
+			{
+				ret = 1 - ret;
+			}
+			throw new GameEndException( ret );		
+		}
+		return ret;
+	}
 	public static String AnalysisToString( double val )
 	{
 		String ret = "The winner is ";
@@ -299,7 +335,7 @@ public class PosManager {
 			return "The game ends unentschieden.";
 	}
 
-	public static long getPosValue(long[][] pos, int color, int[] moves, int moveId, long[][][]blockList, int[] blockCnt)
+	public static long getPosValue(long[][] pos, int color, long[][][]blockList, int[] blockCnt)
 	{
 		// System.out.println(PosManager.ToString( pos1 ));
 		blockCnt[color] = PosManager.getBlockAndCnt(pos[color], blockList[color]);

@@ -1,3 +1,5 @@
+import java.util.Iterator;
+
 // The first item in the list keeps the list lenght
 // The last item in each block is the pointer to the next block (-1 is the null pointer)
  
@@ -21,6 +23,45 @@ public class IntListManager {
 			super("List Management is working wrong - Missing Block");
 			lastBlockPos = LastBlockPos;
 		}
+	}
+
+	class IntListIterator {
+		int listIndex = 0;
+		int index = 0;
+		IntListIterator( int ListIndex )
+		{
+			listIndex = ListIndex;  
+		}
+		public int Lth()
+		{
+			return GetLength(listIndex);
+		}
+		private int lastVirtualIndex = -2;
+		private int lastArrIndex = -2;
+		public int GetItem( int virtualIndex ) throws Exception
+		{
+			if (virtualIndex >= GetLength(listIndex)) throw new Exception("End of List reached.");
+
+			if ( virtualIndex == lastVirtualIndex + 1 )
+			{
+				// Check Block Rollover
+				lastArrIndex++;
+				if ( (lastArrIndex+1) % blockSize == 0 )
+				{
+					lastArrIndex = arr[lastArrIndex];
+				}
+			}
+			else {
+				// From Scratch
+				lastArrIndex = GetArrPos(listIndex, virtualIndex);  
+			}
+			lastVirtualIndex = virtualIndex;
+			return arr[ lastArrIndex ];
+		}
+	}
+	IntListIterator getIterator( int ListIndex )
+	{
+		return new IntListIterator( ListIndex );
 	}
 	
 	IntListManager( int[] Arr, int BlockSize) throws Exception
@@ -77,28 +118,6 @@ public class IntListManager {
 		return arr[ListPos];
 	}
 	
-	private int lastVirtualIndex = -2;
-	private int lastArrIndex = -2;
-	public int GetItem(int ListPos, int virtualIndex ) throws Exception
-	{
-		if (virtualIndex >= GetLength(ListPos)) throw new Exception("End of List reached.");
-		// Optimization
-		if ( virtualIndex == lastVirtualIndex + 1 )
-		{
-			// Check Block Rollover
-			lastArrIndex++;
-			if ( (lastArrIndex+1) % blockSize == 0 )
-			{
-				lastArrIndex = arr[lastArrIndex];
-			}
-		}
-		else {
-			// From Scratch
-			lastArrIndex = GetArrPos(ListPos, virtualIndex);  
-		}
-		lastVirtualIndex = virtualIndex;
-		return arr[ lastArrIndex ];
-	}
 	
 	public void Release(int ListPos) throws Exception
 	{

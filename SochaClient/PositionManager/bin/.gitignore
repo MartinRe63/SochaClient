@@ -8,3 +8,9 @@
 /NodeManager.class
 /PosManager.class
 /ElapsedTimer.class
+/IntListManager$IntList.class
+/IntListManager$IntListIterate.class
+/IntListManager$IntListIterator$IntListIterate.class
+/IntListManager$IntListIterator.class
+/NodeManager$GameEndException.class
+/PosManager$GameEndException.class
