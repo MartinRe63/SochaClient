@@ -1,3 +1,4 @@
+package mr;
 
 public class MaskManager {
 	public static long directionMasks[][][] = new long[4][100][2];

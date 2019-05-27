@@ -1,3 +1,5 @@
+package mr;
+
 import java.math.BigInteger;
 
 public class PosManager {
@@ -15,6 +17,19 @@ public class PosManager {
 	        System.arraycopy(aSource[i], 0, aDestination[i], 0, aSource[i].length);
 	    }
 	}
+	public static int getMove(int color, long[][] aSource, long[][] aDestination)
+	{
+		long[][] mask = new long[3][2];
+	    for (int i = 0; i < aSource.length; i++) 
+		    for (int j = 0; j < aSource[i].length; j++)
+		    	mask[i][j] = aSource[i][j] ^ aDestination[i][j];
+	    int from = Long.numberOfTrailingZeros( mask[color][0] & aSource[color][0] );
+	    	from += Long.numberOfTrailingZeros( mask[color][1] & aSource[color][1] );
+	    int to = Long.numberOfTrailingZeros( mask[color][0] & aDestination[color][0] );
+	    	to += Long.numberOfTrailingZeros( mask[color][1] & aDestination[color][1] );
+	    return PosManager.PackMove( from, to );
+	}
+		
 	static void SetBit( long[] pos, int bitId )
 	{
 		if ( bitId < 64 )
@@ -49,7 +64,7 @@ public class PosManager {
 		int toY = move[1] / 10;
 		return fromX | fromY << 4 | toX << 8 | toY << 12;
 	}
-	static long [][] FromString( String Init )
+	public static long [][] FromString( String Init )
 	{
 		long Pos[][] = new long[3][2];
 		for( int y = 0; y < 10; y++)
@@ -70,16 +85,16 @@ public class PosManager {
 	public static String ToString(long[][] Pos)
 	{
 		String res = new String(
-				  "..........\r\n" +
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" + 
-				  "..........\r\n" ); 
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+    			  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" +
+				  ". . . . . . . . . . \r\n" ); 
 				;
 		char[] res1 = res.toCharArray();
 		for( int y = 0; y < 10; y++)
@@ -87,11 +102,11 @@ public class PosManager {
 			for ( int x = 0; x < 10; x++)
 			{
 				if ( IsBit(Pos[0], y*10+x ) )
-					res1[(9-y)*12+x] = '0';
+					res1[(9-y)*22+x*2] = '0';
 				else if ( IsBit(Pos[1], y*10+x )  )
-					res1[(9-y)*12+x] = '1';
+					res1[(9-y)*22+x*2] = '1';
 				else if ( IsBit( Pos[2], y*10+x ) )
-					res1[(9-y)*12+x] = 'C';
+					res1[(9-y)*22+x*2] = 'C';
 			}
 		}
 		res = new String(res1);
@@ -142,10 +157,15 @@ public class PosManager {
 
 	public static int moveValue (int move )
 	{
-		int mask = 15 << 8;
+		int mask = 15;
+		int fromX = ( move & mask ); mask <<= 4;
+		int fromY = ( move & mask ) >> 4; mask <<= 4;
 		int toX = ( move & mask ) >> 8; mask <<= 4;
-		int toY = ( move & mask ) >> 12; 
-		return ( toX >= 5 ? 9-toX : toX ) * (toY >=5 ? 9-toY : toY);  
+		int toY = ( move & mask ) >> 12;
+		
+		int toVal = ( toX >= 5 ? 9-toX : toX ) * (toY >=5 ? 9-toY : toY );
+		int fromVal = ( fromX >= 5 ? 9-fromX : fromX ) * ( fromY >=5 ? 9-fromY : fromY );
+		return ( toVal - fromVal );  
 	}
 	public static long blockValue ( long[] blockData )
 	{

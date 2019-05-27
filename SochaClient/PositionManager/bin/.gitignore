@@ -14,3 +14,5 @@
 /IntListManager$IntListIterator.class
 /NodeManager$GameEndException.class
 /PosManager$GameEndException.class
+/NodeManager$ToSort.class
+/mr/

@@ -1,3 +1,9 @@
+package mr;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -7,7 +13,7 @@ import java.util.Random;
 //
 public class NodeManager {
 
-    static Random r = new Random(123456789);
+    static Random r = new Random();
     static double epsilon = (float) 1e-6;
 	
 	long crake[] = new long[2];
@@ -78,7 +84,7 @@ public class NodeManager {
 		childListPos = new int[NodeCount];
 		
 		// array to store child lists
-		childArr = new int[NodeCount*50];
+		childArr = new int[NodeCount*10];
 		
 		firstMoveColor = MyColor;
 		ilm = new IntListManager(childArr, 10);
@@ -139,21 +145,22 @@ public class NodeManager {
 	private int selectMove( int NodeIdx ) throws Exception
 	{
 	    int selectedNode = -1;
-	    double bestValue = Double.MIN_VALUE;
+	    double bestValue = Double.NEGATIVE_INFINITY;
 		IntListManager.IntListIterator i = ilm.getIterator( childListPos[ NodeIdx ] );
 	    for (int k = 0; k < i.Lth(); k++ ) {
 	    	int childNodeId = i.GetItem(k);
-	    	int move;
 	    	
 	    	// childvisits == 0, when the end is reached
 	    	long visitCnt = visits[childNodeId];
 	        double childVisits = ( visitCnt == Long.MAX_VALUE ? 0 : visitCnt );
-	    	double totValue;
-	    	
-	    	double uctValue =
-	        		((totValue = totalValue[childNodeId]) / (childVisits + epsilon) +
-			Math.sqrt(Math.log(childVisits+1) / (childVisits + epsilon)) +
-			r.nextDouble() * epsilon + PosManager.moveValue(move = fishMove[childNodeId])) * epsilon;
+	    	double totValue = totalValue[childNodeId];
+	    	int move = fishMove[childNodeId];
+	    	int moveValue = PosManager.moveValue( move );
+	    	double rand = r.nextDouble(); 
+	    	double uctValue = 
+	        		 totValue / ( childVisits + epsilon ) +
+	        		 Math.sqrt( Math.log( childVisits+1 ) / ( childVisits + epsilon ) ) +
+	        		 rand * epsilon + moveValue * 10 *  epsilon;
 	        
 	        // small random number to break ties randomly in unexpanded nodes
 	        // System.out.println("UCT value = " + uctValue + "  tot = " + totValue + " " + PosManager.packMoveToString(move));
@@ -164,6 +171,7 @@ public class NodeManager {
 	        }
 	    }
 	    // System.out.println("Returning: " + selected);
+	    assert selectedNode >= 0 : "Child not found.";
 	    return selectedNode;
 	}
 	
@@ -364,42 +372,44 @@ public class NodeManager {
 		stopSelection = false;
 	}
 
-	public int getBestMove( ) throws Exception 
+	public int getBestMoveThreadApproach() throws Exception
 	{
 		stopSelection = true;
 		thread.join();
-		if ( lfam.IsFree( firstNode )) throw new Exception("Software Issue - Node is not available.");
-		
-		IntListManager.IntListIterator i = ilm.getIterator( childListPos[firstNode] );
-		int ret = -1;
-		
-		float MaxTotal = 0;
-		int bestChildNode = 0;
-		
-		for( int k = 0; k < i.Lth(); k++ ) 
-		{
-			int childNode = i.GetItem( k );
-			if ( lfam.IsFree( childNode )) throw new Exception("Software Issue - Child Node is not available.");
-			if ( totalValue[childNode] > MaxTotal ) 
-			{
-				MaxTotal = totalValue[childNode];
-				bestChildNode = childNode;
-			}
-		}
-		
-		ret = fishMove[bestChildNode];
-		// removeFirstNode( bestChildNode );
-		firstNode = bestChildNode;
-		
-		stopSelection = false;
-		firstMoveColor = ( firstMoveColor + 1 ) % 2; 
+
+		int ret = getBestMove();
 		
 		thread = new SelectThread(this);
 		thread.start();
 		return ret;
 	}
+	public int getBestMove( ) throws Exception 
+	{
+		if ( lfam.IsFree( firstNode )) throw new Exception("Software Issue - Node is not available.");
+		
+		int ret = -1;
+		
+		float MaxTotal = Float.NEGATIVE_INFINITY;
+		int bestChildNode = -1;
+		
+		IntListManager.IntListIterator i = ilm.getIterator( childListPos[firstNode] );
+		for( int k = 0; k < i.Lth(); k++ ) 
+		{
+			int childNode = i.GetItem( k );
+			if ( lfam.IsFree( childNode )) throw new Exception("Software Issue - Child Node is not available.");
+			float val = totalValue[childNode] / visits[childNode];
+			if ( val > MaxTotal ) 
+			{
+				MaxTotal = val;
+				bestChildNode = childNode;
+			}
+		}
+		
+		ret = fishMove[bestChildNode];
+		return ret;
+	}
 	
-	private void truncateTree( int NodeId, int NodeIdToExclude ) throws Exception
+	private void releaseNode( int NodeId, int NodeIdToExclude ) throws Exception
 	{
 		int listId;
 		if ( ( listId = childListPos[NodeId] ) >= 0 )
@@ -410,7 +420,7 @@ public class NodeManager {
 				int childNodeId = i.GetItem( k );
 				if ( childNodeId != NodeIdToExclude )
 				{
-					truncateTree( childNodeId, NodeIdToExclude );
+					releaseNode( childNodeId, NodeIdToExclude );
 				}
 			}
 			ilm.Release(childListPos[NodeId]);
@@ -437,7 +447,7 @@ public class NodeManager {
 		return ret;
 	}
 	
-	public void SelectMoves ( int move1, int move2 ) throws Exception
+	public void DisposeTree ( int move1, int move2 ) throws Exception
 	{
 		int nodeId = findNode( firstNode, move1 );
 		assert nodeId >= 0 : "The first move must be a child of the first Node.";
@@ -446,8 +456,8 @@ public class NodeManager {
 		nodeId = findNode( nodeId, move2 );
 		// if ( nodeId >= 0 )
 		// movePosition(nodeId, fishMove, pos, (firstMoveColor+1)%2 );
-		
-		truncateTree( firstNode, nodeId );
+		int nodeCount = lfam.reservedBlockCnt;
+		releaseNode( firstNode, nodeId );
 		firstNode = nodeId; 
 		if ( firstNode < 0 )
 		{
@@ -458,8 +468,56 @@ public class NodeManager {
 	
 	public int BestMove() throws Exception
 	{
-		return fishMove[selectMove(firstNode)];
+		return getBestMove();
 	}
+	
+	
+	class ToSort implements Comparable
+	{
+		private float totValue;
+		private long visits;
+		private int move;
+		private double value()
+		{
+			return totValue / visits;
+		}
+		public ToSort( float TotalValue, long Visits, int Move )
+		{
+			totValue = TotalValue; 
+			visits = Visits; 
+			move = Move;
+		}
+		@Override
+		public int compareTo(Object arg0) {
+			// TODO Auto-generated method stub
+			return value() > ((ToSort)arg0).value() ? 1 : 0;
+		}
+		@Override
+		public String toString() {
+			return PosManager.packMoveToString(move) + ":" + value() + " v:" + visits + "\r\n";
+		}
+		
+		
+	}
+	public String ValuesToString( ) throws Exception
+	{
+		IntListManager.IntListIterator i = ilm.getIterator( childListPos[firstNode] );
+		List<ToSort> l = new ArrayList<ToSort>();
+		for( int k = 0; k < Integer.min( 10, i.Lth() ) ; k++ ) 
+		{
+			int idx = i.GetItem( k );
+			if ( visits[idx] > 1 )
+				l.add( new ToSort( totalValue[idx], visits[idx], fishMove[idx]));
+		}
+		l.sort( Comparator.comparing( a -> a.value() * -1 )  );
+		String res = "";
+		for ( ToSort val : l )
+		{
+			res += val;
+		}
+		return res;
+	}
+	
 	public String LastPositionToString( )
 	{
 		return ToString() + "\r\n" + PosManager.ToString(pos);
@@ -474,4 +532,5 @@ public class NodeManager {
 		int[] ret = new int [] {0, 0}; 
 		return ret;
 	}
+	
 }

@@ -1,3 +1,4 @@
+package mr;
 
 public class IntFreeArrayManager {
 	int [] toManageOn;

@@ -1,3 +1,5 @@
+package mr;
+
 //all negative values are blocked for the free array management 
 //max size of the array is Integer.Max_Int
 public class LongFreeArrayManager {

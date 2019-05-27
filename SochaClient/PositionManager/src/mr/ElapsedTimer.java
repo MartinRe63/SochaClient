@@ -1,3 +1,4 @@
+package mr;
 public class ElapsedTimer {
     // allows for easy reporting of elapsed time
     long oldTime;

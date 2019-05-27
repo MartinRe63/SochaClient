@@ -1,3 +1,5 @@
+package mr;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
@@ -122,11 +124,100 @@ public class Main {
 		System.out.println( PosManager.AnalysisToString(result) );
 	}
 	
+	public static void testGaming(long[][] Pos)throws Exception
+	{
+        ElapsedTimer t = new ElapsedTimer();
+        
+		NodeManager redNM = null;
+		NodeManager blueNM = null;
+		int redMove = 0;
+		int blueMove = 0; 
+		int moveCnt = 0;
+		long ms = 0;
+		
+		long[][][] blockList = new long[2][16][2]; 	// DIM: Color, BlockId, HL
+		int[] blockCnt = new int[2]; 				// DIM: Color
+		long expands = 0; 
+		try 
+		{
+			while ( true )
+			{
+				t.reset();
+				if ( redNM == null ) 
+					redNM = new NodeManager(10000000, 0, Pos, false, 0);
+				else 
+					redNM.DisposeTree( redMove, blueMove );
+					
+				for ( int k = 0; k < 100000; k++)
+				{
+					redNM.selectAction(true);
+					// System.out.println( nm.LastPositionToString() );
+					expands++;
+				}
+				ms += t.elapsed();
+						
+				moveCnt++;
+				NodeManager.movePosition( ( redMove = redNM.BestMove() ) , Pos, 0);
+				System.out.println(moveCnt + ". " + PosManager.packMoveToString( redMove ));
+				System.out.println(redNM.ValuesToString());
+				System.out.println(PosManager.ToString(Pos));
+				
+				t.reset();
+				if ( blueNM == null )
+					blueNM = new NodeManager(10000000, 1, Pos, false, 1);
+				else
+					blueNM.DisposeTree( blueMove, redMove );
+				for ( int k = 0; k < 50000; k++)
+				{
+					blueNM.selectAction(true);
+					// System.out.println( nm.LastPositionToString() );
+					expands++;
+				}
+				ms += t.elapsed();
+				
+				moveCnt++;
+				NodeManager.movePosition( ( blueMove = blueNM.BestMove() ), Pos, 1);
+				System.out.println(moveCnt + ". " + PosManager.packMoveToString( blueMove ));
+				System.out.println(blueNM.ValuesToString());
+				System.out.println(PosManager.ToString(Pos));
+				
+				PosManager.GetValue( Pos, 1, blockList, blockCnt, moveCnt, 0);
+			}
+		}
+		catch ( PosManager.GameEndException e )
+		{
+			if ( e.res == 1.0 )
+				System.out.println( "Blau hat gewonnen. ");
+			else
+				System.out.println( "Rot hat gewonnen. ");
+		}
+		System.out.println("Milliseconds per playout = " + ( ms * 1000 ) / expands );
+		
+	}
+	public static void getMoveFrom2Pos(long[][] Pos)
+	{
+		long[][] Pos1;
+		Pos1 = PosManager.FromString( new String(
+				  ".11111111."
+				+ "0........0"
+				+ "..0......0"
+				+ "0.....C..0"
+				+ "0........0"
+				+ "0........0"
+				+ "0..C.....0"
+				+ "0........0"
+				+ "0........0"
+				+ ".11111111." )
+				 );
+		System.out.println( PosManager.packMoveToString( PosManager.getMove(0, Pos, Pos1) ) );
+	}
+
 	public static void main(String[] args) throws Exception 
 	{
 		// long test = 0B0111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111L;
 		MaskManager.initMasks(); /// !!! don't forget this !!! 
 		
+		int i = Integer.bitCount(3993984);
 		long[][] Pos;
 		Pos = PosManager.FromString( new String(
 				  ".11111111."
@@ -145,62 +236,8 @@ public class Main {
 		// testBlockAndValueCalculation(Pos);
 		// testMoveCalculation(Pos);
 		// playSimpleGame(Pos);
+		// testGaming(Pos);
+		getMoveFrom2Pos(Pos);
 		
-        ElapsedTimer t = new ElapsedTimer();
-        
-		NodeManager redNM = null;
-		NodeManager blueNM = null;
-		int redMove = 0;
-		int blueMove = 0; 
-		int moveCnt = 0;
-		
-		long[][][] blockList = new long[2][16][2]; 	// DIM: Color, BlockId, HL
-		int[] blockCnt = new int[2]; 				// DIM: Color
-
-		try 
-		{
-			while ( true )
-			{
-				if ( redNM == null ) 
-					redNM = new NodeManager(1000000, 0, Pos, false, 0);
-				else 
-					redNM.SelectMoves( redMove, blueMove );
-					
-				for ( int k = 0; k < 10000; k++)
-				{
-					redNM.selectAction(true);
-					// System.out.println( nm.LastPositionToString() );
-				}
-		
-				NodeManager.movePosition( ( redMove = redNM.BestMove() ) , Pos, 0);
-				System.out.println(PosManager.packMoveToString( redMove ));
-				System.out.println(PosManager.ToString(Pos));
-				
-				if ( blueNM == null )
-					blueNM = new NodeManager(1000000, 1, Pos, false, 1);
-				else
-					blueNM.SelectMoves( blueMove, redMove );
-				for ( int k = 0; k < 10000; k++)
-				{
-					blueNM.selectAction(true);
-					// System.out.println( nm.LastPositionToString() );
-				}
-				
-				NodeManager.movePosition( ( blueMove = blueNM.BestMove() ), Pos, 1);
-				System.out.println(PosManager.packMoveToString( blueMove ));
-				System.out.println(PosManager.ToString(Pos));
-				
-				moveCnt += 2;
-				PosManager.GetValue(Pos, moveCnt, blockList, blockCnt, 1, 0);
-			}
-		}
-		catch ( PosManager.GameEndException e )
-		{
-			if ( e.res == 1.0 )
-				System.out.println( "Blau hat gewonnen. ");
-			else
-				System.out.println( "Rot hat gewonnen. ");
-		}
-		System.out.println(t);
 	}
 }

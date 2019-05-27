@@ -1,3 +1,5 @@
+package mr;
+
 import java.util.Iterator;
 
 // The first item in the list keeps the list lenght
