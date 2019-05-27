@@ -137,6 +137,13 @@ public class PosManager {
 		ret *= multiplier;
 		return ret;
 	}
+	public static int numberOfTrailingZeros( long low, long high )
+	{
+		int ret = Long.numberOfTrailingZeros(low);
+		if ( ret == 0 )
+			ret += Long.numberOfTrailingZeros(high);
+		return ret;
+	}
 	public static int getNextFishPos( long low, long high, int currentPos )
 	{
 		int ret = currentPos+1;
