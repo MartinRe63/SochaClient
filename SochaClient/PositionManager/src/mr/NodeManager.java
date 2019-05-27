@@ -262,33 +262,30 @@ public class NodeManager {
 	public static int getMoveList( long[][]positionData, int color, int[] moves ) throws Exception 
 	{
 		long mask = 1L;
-		int highLong = 0;
 		int moveCnt = 0;
-		long[] long128 = new long[2];
-		for( int p = 0; p < 100; p++ )
+		long[] long128 = new long[2]; // used by movePossible
+		long[][] pos = new long[3][2];
+		PosManager.arrayCopy(positionData, pos);
+		int p = PosManager.getFirstRightBitPos( pos[color][0], pos[color][1] );
+		while ( p < 100 )
 		{
-			if (mask == 0 ) { mask = 1L; highLong++; }
-			long fish = positionData[color][highLong] & mask; 
-			if ( fish != 0 )
+			int x = p % 10;
+			int y = p / 10;
+			for ( int dir = 0; dir < 4; dir++ )
 			{
-				int x = p % 10;
-				int y = p / 10;
-				for ( int dir = 0; dir < 4; dir++ )
-				{
-					// count blue and red fishes in this direction
-					int moveLth = 
-						Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[0][0]) +
-						Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[0][1]) + 
-						Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[1][0]) +
-						Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[1][1]);
-					int newP;
-	      			if ( ( newP = movePossible( x, y, dir, moveLth, positionData, color, long128 ) ) > -1 ) 
-	      				moves[moveCnt++] = PosManager.PackMove( p, newP);
-	      			if ( ( newP = movePossible( x, y, dir+4, moveLth, positionData, color, long128 ) ) > -1 ) 
-	      				moves[moveCnt++] = PosManager.PackMove( p, newP);;
-				}
+				// count blue and red fishes in this direction
+				int moveLth = 
+					Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[0][0]) +
+					Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[0][1]) + 
+					Long.bitCount(MaskManager.directionMasks[dir][p][0] & positionData[1][0]) +
+					Long.bitCount(MaskManager.directionMasks[dir][p][1] & positionData[1][1]);
+				int newP;
+      			if ( ( newP = movePossible( x, y, dir, moveLth, positionData, color, long128 ) ) > -1 ) 
+      				moves[moveCnt++] = PosManager.PackMove( p, newP);
+      			if ( ( newP = movePossible( x, y, dir+4, moveLth, positionData, color, long128 ) ) > -1 ) 
+      				moves[moveCnt++] = PosManager.PackMove( p, newP);;
 			}
-			mask <<= 1;
+			p = PosManager.getNextRightBitPos(pos[color], p);
 		}
 		return moveCnt;
 	}

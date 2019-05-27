@@ -217,7 +217,6 @@ public class Main {
 		// long test = 0B0111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111L;
 		MaskManager.initMasks(); /// !!! don't forget this !!! 
 		
-		int i = Integer.bitCount(3993984);
 		long[][] Pos;
 		Pos = PosManager.FromString( new String(
 				  ".11111111."
@@ -236,8 +235,8 @@ public class Main {
 		// testBlockAndValueCalculation(Pos);
 		// testMoveCalculation(Pos);
 		// playSimpleGame(Pos);
-		// testGaming(Pos);
-		getMoveFrom2Pos(Pos);
+		testGaming(Pos);
+		// getMoveFrom2Pos(Pos);
 		
 	}
 }

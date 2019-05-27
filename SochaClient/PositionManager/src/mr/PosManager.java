@@ -181,10 +181,63 @@ public class PosManager {
 	public static int numberOfTrailingZeros( long low, long high )
 	{
 		int ret = Long.numberOfTrailingZeros(low);
-		if ( ret == 0 )
+		if ( ret == 64 )
 			ret += Long.numberOfTrailingZeros(high);
 		return ret;
 	}
+	public static int getFirstRightBitPos ( long low, long high )
+	{
+		return numberOfTrailingZeros( low, high ); 
+	}
+	public static int getNextRightBitPos( long low, long high, int currentPos)
+	{
+		assert ( getFirstRightBitPos(low, high) >= currentPos ) : "bit found before " + currentPos;
+		if ( currentPos >= 64 )
+		{
+			high &= ~(1L << currentPos - 64);  // switch of current pos in copied data
+		}
+		else 
+		{
+			low &=  ~(1L << currentPos);
+		}
+		return ( getFirstRightBitPos( low, high ));
+	}
+	public static int getNextRightBitPosIgnorePrevious( long low, long high, int currentPos)
+	{
+		int p = getFirstRightBitPos(low, high);
+		// switch of current pos in copied data
+		while ( p < currentPos )
+		{
+			if ( currentPos >= 64 ) 		{
+				high &= ~(1L << currentPos - 64);  
+			} else 	{
+				low &=  ~(1L << currentPos);
+			}
+			p = getFirstRightBitPos(low, high);
+		}
+		return getNextRightBitPos( low, high, p );
+	}
+	/**
+	 * !!! careful ... This will change the current pos value
+	 * @param pos
+	 * @param currentPos
+	 * @return
+	 */
+	public static int getNextRightBitPos( long[] pos, int currentPos)
+	{
+		assert ( getFirstRightBitPos(pos[0], pos[1]) == currentPos ) : currentPos + "bit found before " + currentPos;
+		if ( currentPos >= 64 )
+		{
+			pos[1] &= ~(1L << currentPos - 64);  // switch of current pos in the current position
+		}
+		else 
+		{
+			pos[0] &= ~(1L << currentPos);
+		}
+		return ( getFirstRightBitPos( pos[0], pos[1] ));
+	}
+
+/*	
 	public static int getNextFishPos( long low, long high, int currentPos )
 	{
 		int ret = currentPos+1;
@@ -225,6 +278,8 @@ public class PosManager {
 		assert ret < 128 : "software issue - we only have 128 bit fields here";
 		return ret;
 	}
+	
+*/	
 	/**
 	 * Extend a block of fishes for a number of new fishes
 	 * @param posData      - posData fishes not in the block and not new for the current block
@@ -244,12 +299,11 @@ public class PosManager {
 			long foundNewFishesHigh = MaskManager.neighborMasks[bitPos][1] & ( posData[1] ^ block[1] );
 			if ( Long.bitCount(foundNewFishesLow) > 0 || Long.bitCount(foundNewFishesHigh) > 0)
 			{
-				// current Pos is minus 1 to ensure, that bit 0 is considered
-				int firstPos = numberOfTrailingZeros( foundNewFishesLow, foundNewFishesHigh );
+				int firstPos = getFirstRightBitPos( foundNewFishesLow, foundNewFishesHigh );
 				extendBlock( posData, block, foundNewFishesLow, foundNewFishesHigh, firstPos );
 			}
 			if ( k+1 < bitCnt )
-				bitPos = getNextFishPos(newFishesLow, newFishesHigh, bitPos);
+				bitPos = getNextRightBitPosIgnorePrevious(newFishesLow, newFishesHigh, bitPos);
 		}
 	}
 	
@@ -264,7 +318,7 @@ public class PosManager {
 		while ( bitToFind > 0 )
 		{
 			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; // use existing storage instead ... long[] initPos = new long[] {0,0};
-			int bitId = getNextFishPos( restFishesLow, restFishesHigh, -1);
+			int bitId = getFirstRightBitPos( restFishesLow, restFishesHigh );
 			PosManager.SetBit(blockList[cnt], bitId); // use empty blocklist Storage to set the first fish of a block
 			extendBlock( posData, blockList[cnt], blockList[cnt][0], blockList[cnt][1], bitId );
 			int bitFound = PosManager.BitCnt(blockList[cnt]);
