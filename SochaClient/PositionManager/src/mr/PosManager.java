@@ -208,14 +208,17 @@ public class PosManager {
 		// switch of current pos in copied data
 		while ( p < currentPos )
 		{
-			if ( currentPos >= 64 ) 		{
-				high &= ~(1L << currentPos - 64);  
+			if ( p >= 64 ) 		{
+				high &= ~(1L << p - 64);  
 			} else 	{
-				low &=  ~(1L << currentPos);
+				low &=  ~(1L << p);
 			}
 			p = getFirstRightBitPos(low, high);
 		}
-		return getNextRightBitPos( low, high, p );
+		if ( p > currentPos ) 
+			return p;
+		else
+			return getNextRightBitPos( low, high, p );
 	}
 	/**
 	 * !!! careful ... This will change the current pos value
