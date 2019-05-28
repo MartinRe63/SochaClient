@@ -320,7 +320,7 @@ public class PosManager {
 		long restFishesHigh = posData[1]; 
 		while ( bitToFind > 0 )
 		{
-			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; // use existing storage instead ... long[] initPos = new long[] {0,0};
+			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; 
 			int bitId = getFirstRightBitPos( restFishesLow, restFishesHigh );
 			PosManager.SetBit(blockList[cnt], bitId); // use empty blocklist Storage to set the first fish of a block
 			extendBlock( posData, blockList[cnt], blockList[cnt][0], blockList[cnt][1], bitId );

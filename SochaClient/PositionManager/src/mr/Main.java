@@ -148,7 +148,7 @@ public class Main {
 				else 
 					redNM.DisposeTree( redMove, blueMove );
 					
-				for ( int k = 0; k < 100000; k++)
+				for ( int k = 0; k < 10000; k++)
 				{
 					redNM.selectAction(true);
 					// System.out.println( nm.LastPositionToString() );
@@ -158,16 +158,16 @@ public class Main {
 						
 				moveCnt++;
 				NodeManager.movePosition( ( redMove = redNM.BestMove() ) , Pos, 0);
-				System.out.println(moveCnt + ". " + PosManager.packMoveToString( redMove ));
+				System.out.println(moveCnt + ". " + PosManager.packMoveToString( redMove ) + " depth:" + redNM.GetMaxDepth());
 				System.out.println(redNM.ValuesToString());
 				System.out.println(PosManager.ToString(Pos));
-				
+				redNM.ResetMaxDepth();
 				t.reset();
 				if ( blueNM == null )
 					blueNM = new NodeManager(10000000, 1, Pos, false, 1);
 				else
 					blueNM.DisposeTree( blueMove, redMove );
-				for ( int k = 0; k < 50000; k++)
+				for ( int k = 0; k < 5000; k++)
 				{
 					blueNM.selectAction(true);
 					// System.out.println( nm.LastPositionToString() );
@@ -177,12 +177,17 @@ public class Main {
 				
 				moveCnt++;
 				NodeManager.movePosition( ( blueMove = blueNM.BestMove() ), Pos, 1);
-				System.out.println(moveCnt + ". " + PosManager.packMoveToString( blueMove ));
+				System.out.println(moveCnt + ". " + PosManager.packMoveToString( blueMove ) + " depth:" + blueNM.GetMaxDepth());
 				System.out.println(blueNM.ValuesToString());
 				System.out.println(PosManager.ToString(Pos));
 				
 				PosManager.GetValue( Pos, 1, blockList, blockCnt, moveCnt, 0);
+				blueNM.ResetMaxDepth();
+				/* Total memory currently in use by the JVM */
+			    // System.out.println("Total memory (bytes): " +  Runtime.getRuntime().totalMemory() );
 			}
+
+			
 		}
 		catch ( PosManager.GameEndException e )
 		{
@@ -191,7 +196,7 @@ public class Main {
 			else
 				System.out.println( "Rot hat gewonnen. ");
 		}
-		System.out.println("Milliseconds per playout = " + ( ms * 1000 ) / expands );
+		System.out.println("Nano Seconds per playout = " + ( ms * 1000000 ) / expands );
 		
 	}
 	public static void getMoveFrom2Pos(long[][] Pos)

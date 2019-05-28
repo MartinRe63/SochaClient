@@ -47,6 +47,7 @@ public class NodeManager {
 	int[] visited = new int[61];
 	int visitedCnt = 0;
 	long [][] pos = new long [3][2];
+	int maxDepth = 0;
 	
 	boolean stopSelection = false;
 	SelectThread thread;
@@ -83,6 +84,7 @@ public class NodeManager {
 		totalValue = new float[NodeCount]; 
 		childListPos = new int[NodeCount];
 		
+		  
 		// array to store child lists
 		childArr = new int[NodeCount*10];
 		
@@ -345,6 +347,7 @@ public class NodeManager {
 				foundGameEnd = true;
 			}
 			// int visitedMoveColor = nextMoveColor;
+			maxDepth = ( visitedCnt > maxDepth ) ? visitedCnt : maxDepth;
 	        for( int k = visitedCnt; k >= 0; k-- )                  // for (TreeNode node : visited) 
 	        {
 	            // System.out.println(node);
@@ -528,6 +531,14 @@ public class NodeManager {
 	{
 		int[] ret = new int [] {0, 0}; 
 		return ret;
+	}
+	public int GetMaxDepth()
+	{
+		return maxDepth;
+	}
+	public void ResetMaxDepth()
+	{
+		maxDepth=0;
 	}
 	
 }
