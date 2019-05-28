@@ -208,10 +208,10 @@ public class PosManager {
 		// switch of current pos in copied data
 		while ( p < currentPos )
 		{
-			if ( currentPos >= 64 ) 		{
-				high &= ~(1L << currentPos - 64);  
+			if ( p >= 64 ) 		{
+				high &= ~(1L << p - 64);  
 			} else 	{
-				low &=  ~(1L << currentPos);
+				low &=  ~(1L << p);
 			}
 			p = getFirstRightBitPos(low, high);
 		}
@@ -317,7 +317,7 @@ public class PosManager {
 		long restFishesHigh = posData[1]; 
 		while ( bitToFind > 0 )
 		{
-			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; // use existing storage instead ... long[] initPos = new long[] {0,0};
+			for ( int k = 0; k < 2; k++ ) blockList[cnt][k] = 0; 
 			int bitId = getFirstRightBitPos( restFishesLow, restFishesHigh );
 			PosManager.SetBit(blockList[cnt], bitId); // use empty blocklist Storage to set the first fish of a block
 			extendBlock( posData, blockList[cnt], blockList[cnt][0], blockList[cnt][1], bitId );
