@@ -21,16 +21,16 @@ void MaskManager::initMasks(void) {
 		{
 			for ( int x = 0; x < 10; x++)
 			{
-				int64_t lowMask = 0;
-				int64_t highMask = 0;
+				uint64_t lowMask = 0;
+				uint64_t highMask = 0;
 				for ( int corr = 1; corr > -2; corr-= 2 )
 				{
 					int nextX = x;
 					int nextY = y;
 					int bitCnt = 0;
 					int moveCnt = 0;
-					int64_t lowMoveMask = 0;
-					int64_t highMoveMask = 0;
+					uint64_t lowMoveMask = 0;
+					uint64_t highMoveMask = 0;
 					while ( nextX < 10 && nextX >= 0 && nextY < 10 && nextY >= 0 )
 					{
 						bitCnt = nextX + nextY * 10;
@@ -57,8 +57,8 @@ void MaskManager::initMasks(void) {
 						moveCnt++;
 					}
 				}
-				directionMasks[dir][y*10+x][0] = lowMask;
-				directionMasks[dir][y*10+x][1] = highMask;
+				directionMasks[dir][y*10+x][0] = (long)lowMask;
+				directionMasks[dir][y*10+x][1] = (long)highMask;
 				// System.out.println("dir=" + dir + " coord=" + (y*10+x) + ">" + int64_t.toBinaryString(highMask) + " " + int64_t.toBinaryString(lowMask));
 			}
 		}
