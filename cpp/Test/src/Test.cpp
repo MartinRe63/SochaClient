@@ -7,9 +7,14 @@
 //============================================================================
 
 #include <iostream>
+#include "MaskManager.h"
+#include "BitManager.h"
+
 using namespace std;
 
 int main() {
+	MaskManager::initMasks();
+
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

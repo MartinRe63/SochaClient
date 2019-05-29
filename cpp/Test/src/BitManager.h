@@ -13,10 +13,10 @@
 class BitManager {
 
 public:
-	static void SetBit( int64_t pos[], int bitId );
-	static int BitCnt( int64_t pos[] );
-	static void ClearBit( int64_t pos[], int bitId );
-	static bool IsBit( int64_t pos[], int bitId );
+	static void SetBit( uint64_t pos[], int bitId );
+	static int BitCnt( uint64_t pos[] );
+	static void ClearBit( uint64_t pos[], int bitId );
+	static bool IsBit( uint64_t pos[], int bitId );
 
 };
 
