@@ -20,7 +20,7 @@ class MaskManager
 	// 1. Zur Prüfung ob in die jeweilige Raumrichtung gegnerische Steine oder Kraken sind (Use MoveLenght-1)
 	// 2. Zur Prüfung ob am Zielpunkt ein gegnerischer Stein ist, der entfernt werden muss (Einfach ausschalten - Ob dort ein Stein ist, ist unwichtig)
 public:
-	static long directionMasks[4][100][2];
+	static uint64_t directionMasks[4][100][2];
 	static uint64_t moveMasks[8][10][100][2]; // = new int64_t [8][10][100][2]; // DIMENSIONS - Direction, MoveLength, Positionen, High/Low Bits
 
 	static uint64_t neighborMasks[100][2]; //  = new int64_t [100][2];

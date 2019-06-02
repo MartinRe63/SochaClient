@@ -194,7 +194,7 @@ public class PosManager {
 		assert ( getFirstRightBitPos(low, high) >= currentPos ) : "bit found before " + currentPos;
 		if ( currentPos >= 64 )
 		{
-			high &= ~(1L << currentPos - 64);  // switch of current pos in copied data
+			high &= ~(1L << (currentPos - 64));  // switch of current pos in copied data
 		}
 		else 
 		{

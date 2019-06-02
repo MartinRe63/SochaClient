@@ -148,6 +148,7 @@ public class NodeManager {
 	{
 	    int selectedNode = -1;
 	    double bestValue = Double.NEGATIVE_INFINITY;
+	    
 		IntListManager.IntListIterator i = ilm.getIterator( childListPos[ NodeIdx ] );
 	    for (int k = 0; k < i.Lth(); k++ ) {
 	    	int childNodeId = i.GetItem(k);
@@ -161,7 +162,7 @@ public class NodeManager {
 	    	double rand = r.nextDouble(); 
 	    	double uctValue = 
 	        		 totValue / ( childVisits + epsilon ) +
-	        		 Math.sqrt( Math.log( childVisits+1 ) / ( childVisits + epsilon ) ) +
+	        		 Math.sqrt( Math.log( visits[NodeIdx]+1 ) / ( childVisits + epsilon ) ) +
 	        		 rand * epsilon + moveValue * 10 *  epsilon;
 	        
 	        // small random number to break ties randomly in unexpanded nodes

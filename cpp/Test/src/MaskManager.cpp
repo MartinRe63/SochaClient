@@ -8,6 +8,11 @@
 #include "MaskManager.h"
 #include "BitManager.h"
 
+uint64_t MaskManager::directionMasks[4][100][2];
+uint64_t MaskManager::moveMasks[8][10][100][2];
+uint64_t MaskManager::neighborMasks[100][2];
+uint64_t MaskManager::fishValueMasks[5][2];
+
 void MaskManager::initMasks(void) {
 	int xMove = 0;
 	int yMove = 0;
@@ -67,14 +72,14 @@ void MaskManager::initMasks(void) {
 	{
 		for ( int x = 0; x < 10; x++)
 		{
-			int val = std::min(x >= 5 ? 9-x : x, y >= 5 ? 9-y : y);
+			int val = __min(x >= 5 ? 9-x : x, y >= 5 ? 9-y : y);
 			BitManager::SetBit(fishValueMasks[val], y*10+x);
 		}
 	}
 }
 
 std::string MaskManager::initGame() {
-	string field =
+	std::string field =
 	  (string)".11111111." +
 	  "0........0" +
 	  "0........0" +

@@ -7,13 +7,26 @@
 
 #ifndef MOVEMANAGER_H_
 #define MOVEMANAGER_H_
-
 #include "BoardManager.h"
+
+typedef unsigned packedMove;
+typedef int move[2];
+
 //
-static class MoveManager {
+class MoveManager {
 public:
-	static int getMove(int color, board SourceBoard, board DestinationBoard );
+	static packedMove getMove(int color, board SourceBoard, board DestinationBoard);
+	static packedMove PackMove(move M);
+	static packedMove PackMove(int CoordFrom, int CoordTo);
 
+	static void UnpackMove(packedMove PM, move& M);
 
+	static std::string CoordToString(int Coord);
+
+	static std::string packMoveToString(packedMove move);
+
+	static int moveValue(packedMove PM);
+
+};
 
 #endif /* MOVEMANAGER_H_ */
