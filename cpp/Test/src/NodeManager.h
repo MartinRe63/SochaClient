@@ -15,7 +15,7 @@ typedef struct
 {
     childId childId;
 	float totValue;
-	moveAndVisits visits;
+	moveAndVisits v;
 } node;
 typedef struct
 {
