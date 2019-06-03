@@ -3,7 +3,7 @@
 // Author      : M
 // Version     :
 // Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
+// Description : Socha Player in C++, Ansi-style
 //============================================================================
 
 #include <iostream>
@@ -23,7 +23,7 @@ void testFreeArrayManager()
 
 	FreeArrayManager* fam = new FreeArrayManager( &TestArr[0].free, size, sizeof(node));
 	int id; 
-	for ( int k = 0; k < 1000; k++ )
+	for ( int k = 0; k < 10000; k++ )
 	{
 		switch ( rand() % 3 )
 		{
@@ -57,7 +57,7 @@ void testFreeArrayManager()
 int main() {
 	srand( 123456789 );
 	MaskManager::initMasks();
-	testFreeArrayManager();
+	// testFreeArrayManager();
 
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;

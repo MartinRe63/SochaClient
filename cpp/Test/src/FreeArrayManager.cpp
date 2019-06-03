@@ -9,7 +9,7 @@ FreeArrayManager::FreeArrayManager(nextFreeId* firstArrayEntry, int ArrayLength,
 	itemSize = ItemSize;
 	firstFreeId = 0;
 	nextFreeId* item = toManageOn;
-	for (int k; k < arrayLength-1; k++) {
+	for (int k = 0; k < arrayLength-1; k++) {
 		item->isFree = 1;
 		item->nextFreeId = k + 1;
 		// !!! nextFreeId is pointing to 4 byte only !!! argh - dirty - better template usage
@@ -20,17 +20,13 @@ FreeArrayManager::FreeArrayManager(nextFreeId* firstArrayEntry, int ArrayLength,
 	itemsAvailable = ArrayLength;
 }
 
-inline nextFreeId* FreeArrayManager::GetItem(int idx)
-{
-	return (nextFreeId*)(((char *)toManageOn) + idx * itemSize);
-}
 int FreeArrayManager::ReserveNextFree()
 {
 	int ret = firstFreeId;
 	_ASSERT_EXPR( ret < maxFreeId, "No free Element available.");
 	if (ret >= maxFreeId || ! HasFreeItemsAvailable())
 		return -1;  // this should force an out of bound exception, if the result -1 is not checked.
-	nextFreeId* item = toManageOn + firstFreeId * itemSize; // GetItem(firstFreeId);
+	nextFreeId* item = GetItem(firstFreeId);  // GetItem(firstFreeId);
 	_ASSERT_EXPR ( item->isFree, "Unknown Software Issue - firstFreeId is not a free item.");
 	firstFreeId = item->nextFreeId;
 	itemsAvailable--;
@@ -41,7 +37,7 @@ void FreeArrayManager::DisposeAt(int ToFreeId)
 {
 	nextFreeId* item = GetItem( ToFreeId ); // GetItem(ToFreeId);
 	_ASSERT_EXPR( ! item->isFree , "The element is already a free element. Maybe the free bit was overridden.");
-	_ASSERT_EXPR( ToFreeId < arrayLenght && ToFreeId >= 0, "The ID is out of range.");
+	_ASSERT_EXPR( ToFreeId < arrayLength && ToFreeId >= 0, "The ID is out of range.");
 	item->isFree = 1;
 	item->nextFreeId = firstFreeId; 
 	firstFreeId = ToFreeId;

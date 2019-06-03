@@ -24,14 +24,17 @@ public:
 	{
 		return itemsAvailable > 0;
 	}
-
+protected:
+	inline nextFreeId* FreeArrayManager::GetItem(int idx)
+	{
+		return (nextFreeId*)(((char *)toManageOn) + idx * itemSize);
+	}
 	int itemsAvailable;
+	int arrayLength;
 
 private:
-	nextFreeId* GetItem(int idx);
 	nextFreeId* toManageOn;
 	int itemSize;
-	int arrayLength;
 	int firstFreeId;
 };
 
