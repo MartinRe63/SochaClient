@@ -7,9 +7,11 @@
 //============================================================================
 
 #include <iostream>
+#include <stdlib.h>
 #include "MaskManager.h"
 #include "BitManager.h"
 #include "NodeManager.h"
+#include "FreeArrayManager.h"
 
 using namespace std;
 
@@ -21,17 +23,41 @@ void testFreeArrayManager()
 
 	FreeArrayManager* fam = new FreeArrayManager( &TestArr[0].free, size, sizeof(node));
 	int id; 
-	int k = 0;
-	while ((id = fam->ReserveNextFree()) >= 0)
+	for ( int k = 0; k < 1000; k++ )
 	{
-		TestArr[id].node.v.visits = k;
+		switch ( rand() % 3 )
+		{
+			case 0:
+				// Reserve Items
+				if ( fam->HasFreeItemsAvailable() )
+				{
+					id = fam->ReserveNextFree();
+					TestArr[id].node.v.visits = id;
+				}
+				break;
 
+			case 1:
+				// check Item content
+				id = rand() % size;
+				_ASSERT_EXPR ( ! fam->IsUsed(id) || TestArr[id].node.v.visits == id, "Test Data are wrong." );
+				break;
+			case 2:
+				// dispose Items
+				id = rand() % size;
+				if ( fam->IsUsed(id) )
+				{
+					TestArr[id].node.v.visits = 0;
+					fam->DisposeAt( id );
+				}
+				break;
+		}
 	}
-
 }
 
 int main() {
+	srand( 123456789 );
 	MaskManager::initMasks();
+	testFreeArrayManager();
 
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;

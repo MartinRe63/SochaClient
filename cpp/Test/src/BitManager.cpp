@@ -34,10 +34,11 @@ bool BitManager::IsBit( uint64_t pos[], int bitId )
 		return ( ( pos[1] & ( 1L << bitId ) ) ) != 0;
 }
 
+
 int BitManager::NumberOfTrailingZeros(uint64_t low, uint64_t high)
 {
 	unsigned long ret = 0;
-	int res = _BitScanForward64( &ret, low); // Long.numberOfTrailingZeros(low);
+	unsigned char res = _BitScanForward64( &ret, low); // Long.numberOfTrailingZeros(low);
 	if (res == 0)
 	{
 		res = _BitScanForward64( &ret, high);
@@ -70,7 +71,7 @@ int BitManager::GetNextRightBitPosIgnorePrevious(long low, long high, int curren
 	while (p < currentPos)
 	{
 		if (p >= 64) {
-			high &= ~(1L << p - 64);
+			high &= ~(1L << (p - 64));
 		}
 		else {
 			low &= ~(1L << p);

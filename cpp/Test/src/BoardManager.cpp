@@ -6,6 +6,7 @@
  */
 // #include <string>
 #include <crtdbg.h>
+#include <intrin.h>
 #include "BoardManager.h"
 #include "BitManager.h"
 #include "MaskManager.h"
@@ -97,9 +98,9 @@ long BoardManager::blockValue(boardpane BP)
 void BoardManager::ExtendBlock(boardpane posData, boardpane block, uint64_t newFishesLow, uint64_t newFishesHigh, int firstFishPos)
 {
 	_ASSERT_EXPR((newFishesLow != 0) || (newFishesHigh != 0), "Software Issue - no new fishes found." );
-	int bitCnt = __popcnt64(newFishesLow) + __popcnt64(newFishesHigh);
+	uint64_t bitCnt = __popcnt64(newFishesLow) + __popcnt64(newFishesHigh);
 	int bitPos = firstFishPos;
-	for (int k = 0; k < bitCnt; k++)
+	for (uint64_t k = 0; k < bitCnt; k++)
 	{
 		BitManager::SetBit(block, bitPos);
 		long foundNewFishesLow = MaskManager::neighborMasks[bitPos][0] & (posData[0] ^ block[0]);
@@ -144,7 +145,7 @@ int BoardManager::GetNextRightBitPos(boardpane BP, int currentPos)
 	_ASSERT_EXPR(BitManager::GetFirstRightBitPos(BP[0], BP[1]) == currentPos, currentPos + "bit found before " + currentPos);
 	if (currentPos >= 64)
 	{
-		BP[1] &= ~(1L << currentPos - 64);  // switch of current pos in the current position
+		BP[1] &= ~(1L << (currentPos - 64));  // switch of current pos in the current position
 	}
 	else
 	{

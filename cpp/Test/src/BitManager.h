@@ -15,9 +15,10 @@ class BitManager {
 public:
 	static void SetBit( uint64_t pos[], int bitId );
 
-	static int BitCnt(uint64_t pos[])
+	static uint64_t BitCnt(uint64_t pos[])
 	{
 		return __popcnt64(pos[0]) + __popcnt64(pos[1]);
+		return 0;
 	}
 
 	static void ClearBit( uint64_t pos[], int bitId );

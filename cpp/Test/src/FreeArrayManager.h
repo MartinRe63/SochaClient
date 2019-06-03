@@ -11,6 +11,22 @@ public:
 	~FreeArrayManager();
 	int ReserveNextFree();
 	void DisposeAt(int);
+	inline bool IsUsed(int ToCheckId )
+	{
+		nextFreeId* item = GetItem( ToCheckId );
+		return ! item->isFree;
+	}
+	inline int FreeItemsAvailableCount(void)
+	{
+		return itemsAvailable;
+	}
+	inline bool HasFreeItemsAvailable(void)
+	{
+		return itemsAvailable > 0;
+	}
+
+	int itemsAvailable;
+
 private:
 	nextFreeId* GetItem(int idx);
 	nextFreeId* toManageOn;

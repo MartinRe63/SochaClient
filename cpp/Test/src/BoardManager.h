@@ -11,6 +11,7 @@
 #include <string>
 #include <stdint.h>
 #include <intrin.h>
+#include <crtdbg.h>
 #include "BitManager.h"
 
 
@@ -41,7 +42,7 @@ public:
 	static double Analysis(int moveCnt, boardpane blockListAll[][16], int blockCount[], board pos, int MaxDepth);
 
 	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth);
-	static std::string BoardManager::AnalysisToString(double val);
+	static std::string AnalysisToString(double val);
 private:
 	static long GetPosValue(board pos, int color, boardpane blockList[][16], int blockCnt[]);
 

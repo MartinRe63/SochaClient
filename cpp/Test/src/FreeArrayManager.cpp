@@ -1,8 +1,7 @@
 #include <crtdbg.h>
 #include "FreeArrayManager.h"
 
-const int maxFreeId = ~ ( 1 << 31 );
-
+const int maxFreeId = ~(1 << 31);
 FreeArrayManager::FreeArrayManager(nextFreeId* firstArrayEntry, int ArrayLength, int ItemSize)
 {
 	toManageOn = firstArrayEntry;
@@ -13,37 +12,41 @@ FreeArrayManager::FreeArrayManager(nextFreeId* firstArrayEntry, int ArrayLength,
 	for (int k; k < arrayLength-1; k++) {
 		item->isFree = 1;
 		item->nextFreeId = k + 1;
-		item += itemSize;
+		// !!! nextFreeId is pointing to 4 byte only !!! argh - dirty - better template usage
+		item = (nextFreeId* )(((char *)item ) + itemSize );
 	}
 	item->isFree = 1;
-	item->nextFreeId = maxFreeId;
+	item->nextFreeId = maxFreeId; // once the last free item is used, firstFreeId = maxFreeId;
+	itemsAvailable = ArrayLength;
 }
 
-nextFreeId* FreeArrayManager::GetItem(int idx)
+inline nextFreeId* FreeArrayManager::GetItem(int idx)
 {
-	return toManageOn + idx * itemSize;
+	return (nextFreeId*)(((char *)toManageOn) + idx * itemSize);
 }
 int FreeArrayManager::ReserveNextFree()
 {
 	int ret = firstFreeId;
+	_ASSERT_EXPR( ret < maxFreeId, "No free Element available.");
+	if (ret >= maxFreeId || ! HasFreeItemsAvailable())
+		return -1;  // this should force an out of bound exception, if the result -1 is not checked.
 	nextFreeId* item = toManageOn + firstFreeId * itemSize; // GetItem(firstFreeId);
-	_ASSERT_EXPR(item->nextFreeId < maxFreeId, "No free Element available.");
-	_ASSERT_EXPR ( item->isFree, "Unknows Software Issue - firstFreeId is not a free item.");
-	if (item->nextFreeId >= maxFreeId)
-		ret = -1;
+	_ASSERT_EXPR ( item->isFree, "Unknown Software Issue - firstFreeId is not a free item.");
 	firstFreeId = item->nextFreeId;
+	itemsAvailable--;
 	item->isFree = 0;
 	return (ret);
 }
 void FreeArrayManager::DisposeAt(int ToFreeId)
 {
-	nextFreeId* item = toManageOn + ToFreeId * itemSize; // GetItem(ToFreeId);
-	_ASSERT_EXPR( ! item->isFree , "The element is isready a free element. Maybe the free bit was overridden.");
+	nextFreeId* item = GetItem( ToFreeId ); // GetItem(ToFreeId);
+	_ASSERT_EXPR( ! item->isFree , "The element is already a free element. Maybe the free bit was overridden.");
+	_ASSERT_EXPR( ToFreeId < arrayLenght && ToFreeId >= 0, "The ID is out of range.");
 	item->isFree = 1;
 	item->nextFreeId = firstFreeId; 
 	firstFreeId = ToFreeId;
+	itemsAvailable++;
 }
-
 
 FreeArrayManager::~FreeArrayManager()
 {
