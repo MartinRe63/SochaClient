@@ -33,8 +33,11 @@ void IntListManager::Add(int ListIdx, int NewItem)
 		int listIdx = fam->ReserveNextFree();
 		data[listIdx].f.h.nextIdx = endMarker;
 		data[oldBlockIdx].f.h.nextIdx = listIdx;
+		oldBlockIdx = listIdx;
 	}
 	data[ListIdx].f.length++;
+	data[oldBlockIdx].s.item[lth % blockDataSize] = NewItem;
+
 };
 
 int IntListManager::GetLength(int ListIdx)
@@ -62,6 +65,11 @@ int IntListManager::GetBlockIdx(int ListIdx, int Idx)
 	}
 	return idx;
 };
+
+IntListManager::IntListIterator* IntListManager::GetIterator(int ListIdx)
+{
+	return new IntListManager::IntListIterator(ListIdx, this);
+}
 
 
 IntListManager::IntListIterator::IntListIterator( int ListIdx, IntListManager* Ilm )

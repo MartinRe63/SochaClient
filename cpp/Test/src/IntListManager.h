@@ -9,9 +9,9 @@ public:
 	class IntListIterator
 	{
 	public:
-		IntListIterator( int ListIdx, IntListManager*listIdx Ilm );
 		// https://stackoverflow.com/questions/30898705/usage-of-the-foreach-loop-in-c
 		int GetNextItem();
+		IntListIterator(int ListIdx, IntListManager* Ilm);
 	private:
 		int virtualIdx;
 		int blockIdx;
@@ -24,8 +24,9 @@ public:
 	void Add(int ListIdx, int NewItem);
 	int GetLength(int ListIdx);
 	void Release(int ListIdx);
+	IntListIterator* GetIterator(int ListIdx);
 
-protected:
+private:
 	typedef struct
 	{
 		unsigned int free: 1, nextIdx: 31;

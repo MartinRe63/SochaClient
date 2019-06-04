@@ -97,9 +97,9 @@ public class IntListManager {
 		}	
 		return blockPos + ( Idx - (jumpBlocks*(blockSize-1)) + 1 );
 	}
+
 	public void Add( int ListPos, int NewItem ) throws Exception
 	{
-		
 		int	virtualItemIndex = arr[ListPos]++; // the count is the last new item index 
 	    int arrPos; 
 		try {

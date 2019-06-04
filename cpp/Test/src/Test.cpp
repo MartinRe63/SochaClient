@@ -12,8 +12,58 @@
 #include "BitManager.h"
 #include "NodeManager.h"
 #include "FreeArrayManager.h"
+#include "IntListManager.h"
 
 using namespace std;
+
+void testListManager()
+{
+	int size = 100;
+	int* childArr = new int[size];
+	for (int k = 0; k < size; k++)
+		childArr[k] = -1;
+
+	IntListManager* ilm = new IntListManager( 10000 );
+	int id = rand() % 100;
+	int childListId;
+
+	for (int k = 0; k < 100; k++)
+	{
+		switch (rand() % 3)
+		{
+		case 0:
+			// Reserve Items
+			if ( childArr[id] == -1 )
+			{
+				childListId = childArr[id] = ilm->ReserveList();
+				int lth = rand() % 60;
+				for ( int j = 0; j < lth; j++ )
+				{
+					ilm->Add( childListId, j );
+				}
+			}
+			break;
+
+		case 1:
+			// check Item content
+			if ( ( childListId = childArr[id] ) != -1)
+			{
+				int lth = ilm->GetLength(childListId);
+				IntListManager::IntListIterator* it = ilm->GetIterator(childListId);
+				for (int j = 0; j < lth; j++)
+					_ASSERT_EXPR(it->GetNextItem() == j, "Software issue - wrong Data found in the List.");
+			}
+		case 2:
+			// dispose Items
+			if ((childListId = childArr[id]) != -1)
+			{
+				ilm->Release(childListId);
+				childArr[id] = -1;
+			}
+			break;
+		}
+	}
+}
 
 void testFreeArrayManager() 
 {
@@ -58,6 +108,7 @@ int main() {
 	srand( 123456789 );
 	MaskManager::initMasks();
 	// testFreeArrayManager();
+	testListManager();
 
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
