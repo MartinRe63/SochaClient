@@ -25,7 +25,7 @@ public:
 		return itemsAvailable > 0;
 	}
 protected:
-	inline nextFreeId* FreeArrayManager::GetItem(int idx)
+	inline nextFreeId* GetItem(int idx)
 	{
 		return (nextFreeId*)(((char *)toManageOn) + idx * itemSize);
 	}

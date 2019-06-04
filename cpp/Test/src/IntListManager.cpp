@@ -1,7 +1,9 @@
 #include <crtdbg.h>
+#include <stdexcept>
 #include "IntListManager.h"
 
-static const int endMarker = -1;
+static const int endMarker = ~(1 << 31);
+
 
 IntListManager::IntListManager( int BlockAmount )
 {
@@ -15,15 +17,16 @@ int IntListManager::ReserveList()
 	int listIdx = fam->ReserveNextFree();
 	data[listIdx].f.h.nextIdx = endMarker;
 	data[listIdx].f.length = 0;
+	return listIdx;
 };
 
 void IntListManager::Add(int ListIdx, int NewItem)
 {
 	int lth = data[ListIdx].f.length;
-	int oldBlockCnt = ( lth + 1 ) / dataSize;
-	int oldBlockIdx = GetBlockIdx( lth + 1 );
+	int oldBlockCnt = ( lth + 1 ) / blockDataSize;
+	int oldBlockIdx = GetBlockIdx( ListIdx, lth + 1 );
 	lth++;
-	int newBlockCnt = ( lth + 1 ) / dataSize;
+	int newBlockCnt = ( lth + 1 ) / blockDataSize;
 	if ( oldBlockCnt != newBlockCnt )
 	{
 		// add a block to the chain of blocks
@@ -51,8 +54,7 @@ void IntListManager::Release(int ListIdx)
 
 int IntListManager::GetBlockIdx(int ListIdx, int Idx)
 {
-	int lth = data[ListIdx].f.length;
-	int blockCnt = (Idx + 1) / dataSize;
+	int blockCnt = (Idx + 1) / blockDataSize;
 	int idx = ListIdx; 
 	for (int k = 0; k < blockCnt; k++)
 	{
@@ -60,4 +62,28 @@ int IntListManager::GetBlockIdx(int ListIdx, int Idx)
 	}
 	return idx;
 };
+
+
+IntListManager::IntListIterator::IntListIterator( int ListIdx, IntListManager* Ilm )
+{
+	blockIdx = ListIdx;
+	virtualIdx = 0;
+	listIdx = ListIdx;
+	ilm = Ilm;
+}
+int IntListManager::IntListIterator::GetNextItem()
+{
+	if ( virtualIdx >= ilm->GetLength( listIdx ) )
+	{
+		throw std::out_of_range("End of the list is reached.");
+		return -1;
+	}
+    if ( (virtualIdx+1) % blockDataSize == 0 )
+    {
+    	blockIdx = ilm->GetBlockIdx(listIdx, virtualIdx);
+    }
+    int item = ilm->data[blockIdx].s.item[(virtualIdx+1) % blockDataSize];
+    virtualIdx++;
+    return item;
+}
 
