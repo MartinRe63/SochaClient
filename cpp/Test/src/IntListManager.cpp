@@ -20,14 +20,12 @@ int IntListManager::ReserveList()
 	return listIdx;
 };
 
-void IntListManager::Add(int ListIdx, int NewItem)
+void IntListManager::Add(int ListIdx, smallNode NewItem)
 {
 	int lth = data[ListIdx].f.length;
-	int oldBlockCnt = ( lth + 1 ) / blockDataSize;
 	int oldBlockIdx = GetBlockIdx( ListIdx, lth + 1 );
 	lth++;
-	int newBlockCnt = ( lth + 1 ) / blockDataSize;
-	if ( oldBlockCnt != newBlockCnt )
+	if ( oldBlockIdx == endMarker )
 	{
 		// add a block to the chain of blocks
 		int listIdx = fam->ReserveNextFree();
@@ -66,32 +64,36 @@ int IntListManager::GetBlockIdx(int ListIdx, int Idx)
 	return idx;
 };
 
-IntListManager::IntListIterator* IntListManager::GetIterator(int ListIdx)
+IntListManager::ReadIterator* IntListManager::GetIterator(int ListIdx)
 {
-	return new IntListManager::IntListIterator(ListIdx, this);
+	return new IntListManager::ReadIterator(ListIdx, this);
 }
 
 
-IntListManager::IntListIterator::IntListIterator( int ListIdx, IntListManager* Ilm )
+IntListManager::ReadIterator::ReadIterator( int ListIdx, IntListManager* Ilm )
 {
 	blockIdx = ListIdx;
 	virtualIdx = 0;
 	listIdx = ListIdx;
 	ilm = Ilm;
 }
-int IntListManager::IntListIterator::GetNextItem()
+smallNode IntListManager::ReadIterator::GetNextItem()
 {
 	if ( virtualIdx >= ilm->GetLength( listIdx ) )
 	{
 		throw std::out_of_range("End of the list is reached.");
-		return -1;
+		smallNode sN;
+		sN.isSuperPackedMove = 0;
+		sN.nodeIdx = -1;
+		return sN;
 	}
-    if ( (virtualIdx+1) % blockDataSize == 0 )
+	int nextId = virtualIdx+1;
+    if ( nextId % blockDataSize == 0 )
     {
     	blockIdx = ilm->GetBlockIdx(listIdx, virtualIdx);
     }
-    int item = ilm->data[blockIdx].s.item[(virtualIdx+1) % blockDataSize];
-    virtualIdx++;
+    smallNode item = ilm->data[blockIdx].s.item[nextId % blockDataSize];
+    virtualIdx = nextId;
     return item;
 }
 

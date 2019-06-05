@@ -21,14 +21,17 @@ void testListManager()
 	int size = 100;
 	int* childArr = new int[size];
 	for (int k = 0; k < size; k++)
+	{
 		childArr[k] = -1;
+	}
 
 	IntListManager* ilm = new IntListManager( 10000 );
-	int id = rand() % 100;
-	int childListId;
 
-	for (int k = 0; k < 100; k++)
+
+	for (int k = 0; k < 200; k++)
 	{
+		int id = rand() % 100;
+		int childListId;
 		switch (rand() % 3)
 		{
 		case 0:
@@ -37,7 +40,10 @@ void testListManager()
 			{
 				childListId = childArr[id] = ilm->ReserveList();
 				int lth = rand() % 60;
-				for ( int j = 0; j < lth; j++ )
+				smallNode j;
+				j.isSuperPackedMove = 0;
+				j.nodeIdx = -1;
+				for ( j.nodeIdx = 0; j.nodeIdx < lth; j.nodeIdx++ )
 				{
 					ilm->Add( childListId, j );
 				}
@@ -49,7 +55,7 @@ void testListManager()
 			if ( ( childListId = childArr[id] ) != -1)
 			{
 				int lth = ilm->GetLength(childListId);
-				IntListManager::IntListIterator* it = ilm->GetIterator(childListId);
+				IntListManager::ReadIterator* it = ilm->GetIterator(childListId);
 				for (int j = 0; j < lth; j++)
 					_ASSERT_EXPR(it->GetNextItem() == j, "Software issue - wrong Data found in the List.");
 			}

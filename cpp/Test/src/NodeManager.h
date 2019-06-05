@@ -25,12 +25,22 @@ typedef struct
 	};
 } m;
 
+struct smallNode {
+	union {
+		unsigned int isSuperPackedMove : 1, packedMove : 31;
+		unsigned int isNoNodeIdx : 1, nodeIdx : 31;
+	};
+};
+
+
 class NodeManager
 {
 
 public:
 	NodeManager( int nodeCount );
 	~NodeManager();
+
+	static smallNode superPackMove( int fromPos, int toPos );
 private: 
 	m* memory;
 };
