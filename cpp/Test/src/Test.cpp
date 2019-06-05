@@ -43,9 +43,10 @@ void testListManager()
 				smallNode j;
 				j.isSuperPackedMove = 0;
 				j.nodeIdx = -1;
+				IntListManager::WriteIterator* it = ilm->GetWriteIterator(childListId);
 				for ( j.nodeIdx = 0; j.nodeIdx < lth; j.nodeIdx++ )
 				{
-					ilm->Add( childListId, j );
+					it->SetNextItem( j );
 				}
 			}
 			break;
@@ -55,10 +56,11 @@ void testListManager()
 			if ( ( childListId = childArr[id] ) != -1)
 			{
 				int lth = ilm->GetLength(childListId);
-				IntListManager::ReadIterator* it = ilm->GetIterator(childListId);
+				IntListManager::ReadIterator* it = ilm->GetReadIterator(childListId);
 				for (int j = 0; j < lth; j++)
-					_ASSERT_EXPR(it->GetNextItem() == j, "Software issue - wrong Data found in the List.");
+					_ASSERT_EXPR(it->GetNextItem()->nodeIdx == j, "Software issue - wrong Data found in the List.");
 			}
+			break;
 		case 2:
 			// dispose Items
 			if ((childListId = childArr[id]) != -1)

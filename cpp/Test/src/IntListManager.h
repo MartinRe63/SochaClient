@@ -11,7 +11,7 @@ public:
 	{
 	public:
 		// https://stackoverflow.com/questions/30898705/usage-of-the-foreach-loop-in-c
-		smallNode GetNextItem();
+		smallNode* GetNextItem();
 		ReadIterator(int ListIdx, IntListManager* Ilm);
 
 	private:
@@ -23,23 +23,24 @@ public:
 	class WriteIterator
 	{
 	public:
-		// https://stackoverflow.com/questions/30898705/usage-of-the-foreach-loop-in-c
 		void SetNextItem( smallNode );
 		WriteIterator(int ListIdx, IntListManager* Ilm);
 
 	private:
-		int virtualIdx;
+		int relativBlockIdx;
 		int blockIdx;
 		int listIdx;
 		IntListManager* ilm;
 	};
 	IntListManager( int );
-
 	int ReserveList();
-	void Add(int ListIdx, smallNode NewItem);
 	int GetLength(int ListIdx);
 	void Release(int ListIdx);
-	ReadIterator* GetIterator(int ListIdx);
+	ReadIterator* GetReadIterator(int ListIdx);
+	WriteIterator* GetWriteIterator(int ListIdx);
+
+	friend class WriteIterator;
+	friend class ReadIterator;
 
 private:
 	typedef struct
@@ -68,6 +69,7 @@ private:
 		};
 	};
 	int GetBlockIdx(int ListIdx, int Idx);
+	void Add(int ListIdx, int BlockIdx, int relativeIdx, smallNode NewItem);
 
 	listData* data;
 	FreeArrayManager* fam;

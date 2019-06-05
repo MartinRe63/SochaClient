@@ -20,21 +20,10 @@ int IntListManager::ReserveList()
 	return listIdx;
 };
 
-void IntListManager::Add(int ListIdx, smallNode NewItem)
+void IntListManager::Add(int ListIdx, int BlockIdx, int RelativeIdx, smallNode NewItem)
 {
-	int lth = data[ListIdx].f.length;
-	int oldBlockIdx = GetBlockIdx( ListIdx, lth + 1 );
-	lth++;
-	if ( oldBlockIdx == endMarker )
-	{
-		// add a block to the chain of blocks
-		int listIdx = fam->ReserveNextFree();
-		data[listIdx].f.h.nextIdx = endMarker;
-		data[oldBlockIdx].f.h.nextIdx = listIdx;
-		oldBlockIdx = listIdx;
-	}
 	data[ListIdx].f.length++;
-	data[oldBlockIdx].s.item[lth % blockDataSize] = NewItem;
+	data[BlockIdx].s.item[RelativeIdx] = NewItem;
 
 };
 
@@ -64,9 +53,14 @@ int IntListManager::GetBlockIdx(int ListIdx, int Idx)
 	return idx;
 };
 
-IntListManager::ReadIterator* IntListManager::GetIterator(int ListIdx)
+IntListManager::ReadIterator* IntListManager::GetReadIterator(int ListIdx)
 {
 	return new IntListManager::ReadIterator(ListIdx, this);
+}
+
+IntListManager::WriteIterator* IntListManager::GetWriteIterator(int ListIdx)
+{
+	return new IntListManager::WriteIterator(ListIdx, this);
 }
 
 
@@ -77,7 +71,7 @@ IntListManager::ReadIterator::ReadIterator( int ListIdx, IntListManager* Ilm )
 	listIdx = ListIdx;
 	ilm = Ilm;
 }
-smallNode IntListManager::ReadIterator::GetNextItem()
+smallNode* IntListManager::ReadIterator::GetNextItem()
 {
 	if ( virtualIdx >= ilm->GetLength( listIdx ) )
 	{
@@ -85,14 +79,14 @@ smallNode IntListManager::ReadIterator::GetNextItem()
 		smallNode sN;
 		sN.isSuperPackedMove = 0;
 		sN.nodeIdx = -1;
-		return sN;
+		return 0;
 	}
 	int nextId = virtualIdx+1;
     if ( nextId % blockDataSize == 0 )
     {
     	blockIdx = ilm->GetBlockIdx(listIdx, virtualIdx);
     }
-    smallNode item = ilm->data[blockIdx].s.item[nextId % blockDataSize];
+    smallNode* item = &ilm->data[blockIdx].s.item[nextId % blockDataSize];
     virtualIdx = nextId;
     return item;
 }
@@ -101,12 +95,21 @@ smallNode IntListManager::ReadIterator::GetNextItem()
 IntListManager::WriteIterator::WriteIterator( int ListIdx, IntListManager* Ilm )
 {
 	blockIdx = ListIdx;
-	virtualIdx = 0;
+	relativBlockIdx = 1;
 	listIdx = ListIdx;
 	ilm = Ilm;
 }
 
 void IntListManager::WriteIterator::SetNextItem( smallNode n )
 {
+	ilm->Add(listIdx, blockIdx, relativBlockIdx, n);
+	relativBlockIdx++;
+	if ( relativBlockIdx == blockDataSize )
+	{
+		relativBlockIdx = 0;
+		int newBlockIdx = ilm->fam->ReserveNextFree();
+		ilm->data[blockIdx].s.h.nextIdx = newBlockIdx; 
+		blockIdx = newBlockIdx; 
+	}
 }
 
