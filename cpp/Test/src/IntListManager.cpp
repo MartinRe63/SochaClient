@@ -97,3 +97,16 @@ smallNode IntListManager::ReadIterator::GetNextItem()
     return item;
 }
 
+
+IntListManager::WriteIterator::WriteIterator( int ListIdx, IntListManager* Ilm )
+{
+	blockIdx = ListIdx;
+	virtualIdx = 0;
+	listIdx = ListIdx;
+	ilm = Ilm;
+}
+
+void IntListManager::WriteIterator::SetNextItem( smallNode n )
+{
+}
+
