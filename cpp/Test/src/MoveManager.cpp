@@ -36,7 +36,7 @@ void MoveManager::UnpackMove( packedMove PM, move& M )
 	M[1] += ((PM & mask) >> 12) * 10;
 }
 
-std::string MoveManager::CoordToString(int Coord)
+std::string MoveManager::CoordinatesToString(int Coord)
 {
 	int val = (int)'a';
 	return std::string(std::string((std::string(1, (const char)(val + Coord % 10)) + std::string(1, (const char)(Coord / 10)))));
@@ -47,7 +47,7 @@ std::string MoveManager::packMoveToString(packedMove PM)
 	move M;
 
 	UnpackMove(PM, M);
-	std::string res = CoordToString(M[0]) + "->" + CoordToString(M[1]);
+	std::string res = CoordinatesToString(M[0]) + "->" + CoordinatesToString(M[1]);
 	return res;
 }
 

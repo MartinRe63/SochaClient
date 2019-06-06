@@ -76,9 +76,6 @@ smallNode* IntListManager::ReadIterator::GetNextItem()
 	if ( virtualIdx >= ilm->GetLength( listIdx ) )
 	{
 		throw std::out_of_range("End of the list is reached.");
-		smallNode sN;
-		sN.isSuperPackedMove = 0;
-		sN.nodeIdx = -1;
 		return 0;
 	}
 	int nextId = virtualIdx+1;
@@ -100,7 +97,7 @@ IntListManager::WriteIterator::WriteIterator( int ListIdx, IntListManager* Ilm )
 	ilm = Ilm;
 }
 
-void IntListManager::WriteIterator::SetNextItem( smallNode n )
+void IntListManager::WriteIterator::AddItem( smallNode n )
 {
 	ilm->Add(listIdx, blockIdx, relativBlockIdx, n);
 	relativBlockIdx++;
@@ -109,7 +106,8 @@ void IntListManager::WriteIterator::SetNextItem( smallNode n )
 		relativBlockIdx = 0;
 		int newBlockIdx = ilm->fam->ReserveNextFree();
 		ilm->data[blockIdx].s.h.nextIdx = newBlockIdx; 
-		blockIdx = newBlockIdx; 
+		blockIdx = newBlockIdx;
+		ilm->data[blockIdx].s.h.nextIdx = endMarker;
 	}
 }
 

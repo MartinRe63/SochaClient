@@ -28,7 +28,7 @@ void testListManager()
 	IntListManager* ilm = new IntListManager( 10000 );
 
 
-	for (int k = 0; k < 200; k++)
+	for (int k = 0; k < 20000; k++)
 	{
 		int id = rand() % 100;
 		int childListId;
@@ -46,7 +46,7 @@ void testListManager()
 				IntListManager::WriteIterator* it = ilm->GetWriteIterator(childListId);
 				for ( j.nodeIdx = 0; j.nodeIdx < lth; j.nodeIdx++ )
 				{
-					it->SetNextItem( j );
+					it->AddItem( j );
 				}
 			}
 			break;

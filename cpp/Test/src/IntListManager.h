@@ -23,7 +23,7 @@ public:
 	class WriteIterator
 	{
 	public:
-		void SetNextItem( smallNode );
+		void AddItem( smallNode );
 		WriteIterator(int ListIdx, IntListManager* Ilm);
 
 	private:

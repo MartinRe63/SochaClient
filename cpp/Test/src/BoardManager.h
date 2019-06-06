@@ -34,6 +34,7 @@ public:
 
 	static void Copy(board Source, board Destination);
 	static void FromString(std::string Init, board &B);
+	static std::string ToString( board B);
 
 	static long blockValue(boardpane);
 	static void ExtendBlock(boardpane posData, boardpane block, uint64_t newFishesLow, uint64_t newFishesHigh, int firstFishPos);
