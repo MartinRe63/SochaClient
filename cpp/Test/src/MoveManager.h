@@ -27,7 +27,7 @@ public:
 	static std::string packMoveToString(packedMove move);
 
 	static int moveValue(packedMove PM);
-	static
+	
 };
 
 #endif /* MOVEMANAGER_H_ */

@@ -1,6 +1,6 @@
 #pragma once
-
 #include "FreeArrayManager.h"
+#include "BoardManager.h"
 
 typedef struct 
 {
@@ -32,16 +32,20 @@ struct smallNode {
 	};
 };
 
-
 class NodeManager
 {
 
 public:
-	NodeManager( int nodeCount );
+	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth );
 	~NodeManager();
 
 	static smallNode superPackMove( int fromPos, int toPos );
 private: 
+	static bool hasChild(smallNode);
+
 	m* memory;
+	int firstMoveColor;
+	int firstMoveDepth;
+	boardpane* firstBoard;
 };
 
