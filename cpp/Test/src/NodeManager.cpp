@@ -34,8 +34,7 @@ bool NodeManager::hasChild( smallNode sN )
 {
 	if (sN.isSuperPackedMove == 1)
 		return false;
-	
-	return true;
+	return memory[sN.nodeIdx].node.childId > -1;
 }
 
 smallNode NodeManager::superPackMove(int fromPos, int toPos)
