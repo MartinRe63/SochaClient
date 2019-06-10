@@ -5,6 +5,7 @@
  *      Author: mrenneke
  */
 
+#include <string.h>
 #include "MoveManager.h"
 
 unsigned MoveManager::getMove(int color, board SourceBoard, board DestinationBoard)
@@ -12,7 +13,7 @@ unsigned MoveManager::getMove(int color, board SourceBoard, board DestinationBoa
 	return 0;
 }
 
-packedMove MoveManager::PackMove( move M )
+packedMove MoveManager::PackMove( mov M )
 {
 	int fromX = M[0] % 10;
 	int fromY = M[0] / 10;
@@ -21,13 +22,13 @@ packedMove MoveManager::PackMove( move M )
 	return fromX | fromY << 4 | toX << 8 | toY << 12;
 }
 
-packedMove MoveManager::PackMove(int CoordFrom, int CoordTo)
+packedMove MoveManager::PackMove(coordinates CoordFrom, coordinates CoordTo)
 {
-	move M = { CoordFrom, CoordTo };
+	mov M = { CoordFrom, CoordTo };
 	return PackMove(M);
 }
 
-void MoveManager::UnpackMove( packedMove PM, move& M )
+void MoveManager::UnpackMove( packedMove PM, mov& M )
 {
 	int mask = 15;
 	M[0] = PM & mask; mask <<= 4;
@@ -36,15 +37,21 @@ void MoveManager::UnpackMove( packedMove PM, move& M )
 	M[1] += ((PM & mask) >> 12) * 10;
 }
 
-std::string MoveManager::CoordinatesToString(int Coord)
+std::string MoveManager::CoordinatesToString(coordinates Coord)
 {
 	int val = (int)'a';
 	return std::string(std::string((std::string(1, (const char)(val + Coord % 10)) + std::string(1, (const char)(Coord / 10)))));
 }
 
+void MoveManager::CoordinatesToXY(coordinates Coord, int * x, int * y)
+{
+	*x = Coord % 10;
+	*y = Coord / 10; 
+}
+
 std::string MoveManager::packMoveToString(packedMove PM)
 {
-	move M;
+	mov M;
 
 	UnpackMove(PM, M);
 	std::string res = CoordinatesToString(M[0]) + "->" + CoordinatesToString(M[1]);

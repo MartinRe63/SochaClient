@@ -3,6 +3,7 @@
 
 static double epsilon = (float) 1e-6;
 
+
 NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth)
 {
 
@@ -34,10 +35,13 @@ bool NodeManager::hasChild( smallNode sN )
 {
 	if (sN.isSuperPackedMove == 1)
 		return false;
-	return memory[sN.nodeIdx].node.childId > -1;
+	return memory[sN.nodeIdx].node.child.id > -1;
 }
 
-smallNode NodeManager::superPackMove(int fromPos, int toPos)
+smallNode NodeManager::superPackMove(coordinates fromPos, coordinates toPos)
 {
-	return smallNode();
+	smallNode ret; 
+	ret.isSuperPackedMove = 1;
+	ret.packedMove = toPos * 100 + fromPos;
+	return ret;
 }

@@ -1,29 +1,31 @@
 #pragma once
 #include "FreeArrayManager.h"
 #include "BoardManager.h"
+#include "MoveManager.h"
 
-typedef struct 
+struct moveAndVisits
 {
 	unsigned int move : 8, visits : 24;
-} moveAndVisits;
-typedef struct
-{
-	unsigned int reserved: 1, syncSignal: 1, childId : 30;
-} childId;
+};
 
-typedef struct
+struct childId
 {
-    childId childId;
+	unsigned int reserved: 1, syncSignal: 1, id : 30;
+};
+
+struct node
+{
+    childId child;
 	float totValue;
 	moveAndVisits v;
-} node;
-typedef struct
+};
+struct m
 {
 	union {
 		node node;
 		nextFreeId free;
 	};
-} m;
+};
 
 struct smallNode {
 	union {
@@ -39,9 +41,9 @@ public:
 	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth );
 	~NodeManager();
 
-	static smallNode superPackMove( int fromPos, int toPos );
+	static smallNode superPackMove(coordinates fromPos, coordinates toPos );
 private: 
-	static bool hasChild(smallNode);
+	bool hasChild(smallNode);
 
 	m* memory;
 	int firstMoveColor;
