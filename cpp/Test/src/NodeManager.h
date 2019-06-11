@@ -42,6 +42,7 @@ public:
 
 private: 
 	bool hasChild(smallNode);
+	void initNode ( int nodeId, mov move, long visitCnt );
 
 	m* memory;
 	int firstMoveColor;

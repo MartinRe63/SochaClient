@@ -66,16 +66,25 @@ int MoveManager::moveValue(packedMove PM)
 	int toX = (PM & mask) >> 8; mask <<= 4;
 	int toY = (PM & mask) >> 12;
 
-	int toVal = (toX >= 5 ? 9 - toX : toX) * (toY >= 5 ? 9 - toY : toY);
-	int fromVal = (fromX >= 5 ? 9 - fromX : fromX) * (fromY >= 5 ? 9 - fromY : fromY);
-	return (toVal - fromVal);
+	return moveValue( fromX, fromY, toX, toY );
+}
+
+int MoveManager::moveValue(superPackedMove SPM )
+{
+	int from = SPM.packedMove % 128;
+	int to = SPM.packedMove / 128;
+	int fromX = from % 10;
+	int fromY = from / 10;
+	int toX = to % 10;
+	int toY = to / 10;
+	return moveValue( fromX, fromY, toX, toY );
 }
 
 superPackedMove MoveManager::superPackMove(coordinates fromCoord, coordinates toCoord )
 {
 	superPackedMove sPM;
 	sPM.isSuperPackedMove = 1;
-	sPM.packedMove = toCoord << 7 + fromCoord;
+	sPM.packedMove = toCoord * 128 + fromCoord;
 	return sPM;
 }
 

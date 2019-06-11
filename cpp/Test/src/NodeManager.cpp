@@ -39,3 +39,13 @@ bool NodeManager::hasChild( smallNode sN )
 	return memory[sN.nodeIdx].node.childId.childId < nullChildListId;
 }
 
+void NodeManager::initNode ( int nodeId, mov move, long visitCnt )
+{
+
+	m* node = &memory[nodeId];
+	node->node.childId.childId = nullChildListId;
+	node->node.totValue = 0.5f;
+	node->node.v.visits = visitCnt;
+	// node->node.v.move = move;
+}
+

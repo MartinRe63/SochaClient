@@ -30,6 +30,7 @@ public:
     static void CoordinatesToXY(coordinates Coord, int* x, int* y);
 	static std::string packMoveToString(packedMove move);
 
+	inline static int moveValue(superPackedMove SPM );
 	inline static int moveValue(int fromX, int fromY, int toX, int toY );
 	inline static int moveValue(packedMove PM);
 	static superPackedMove superPackMove( coordinates fromCoord, coordinates toCoord );
