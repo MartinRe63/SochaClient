@@ -1,0 +1,21 @@
+﻿################################################################################
+# Diese .gitignore-Datei wurde von Microsoft(R) Visual Studio automatisch erstellt.
+################################################################################
+
+*.ipch
+*.obj
+*.pdb
+*.tlog
+/cpp/.vs/Test1/v15/Browse.VC.opendb
+/cpp/.vs/Test1/v15/Browse.VC.db
+/cpp/Debug/Test1.log
+/cpp/Debug/Test1.Build.CppClean.log
+*.log
+/cpp/x64/Debug/vc141.idb
+/cpp/x64/Debug/Test1.ilk
+/cpp/x64/Debug/Test1.exe
+/cpp/Test1.vcxproj.user
+/cpp/Test1.vcxproj.filters
+/cpp/Test1.vcxproj
+/cpp/Test1.sln
+/cpp/.vs/Test1/v15/.suo

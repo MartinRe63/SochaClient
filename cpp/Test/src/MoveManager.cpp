@@ -57,7 +57,12 @@ std::string MoveManager::packMoveToString(packedMove PM)
 	std::string res = CoordinatesToString(M[0]) + "->" + CoordinatesToString(M[1]);
 	return res;
 }
-
+int MoveManager::moveValue(int fromX, int fromY, int toX, int toY)
+{
+	int toVal = (toX >= 5 ? 9 - toX : toX) * (toY >= 5 ? 9 - toY : toY);
+	int fromVal = (fromX >= 5 ? 9 - fromX : fromX) * (fromY >= 5 ? 9 - fromY : fromY);
+	return (toVal - fromVal);
+}
 int MoveManager::moveValue(packedMove PM)
 {
 	int mask = 15;
@@ -65,10 +70,7 @@ int MoveManager::moveValue(packedMove PM)
 	int fromY = (PM & mask) >> 4; mask <<= 4;
 	int toX = (PM & mask) >> 8; mask <<= 4;
 	int toY = (PM & mask) >> 12;
-
-	int toVal = (toX >= 5 ? 9 - toX : toX) * (toY >= 5 ? 9 - toY : toY);
-	int fromVal = (fromX >= 5 ? 9 - fromX : fromX) * (fromY >= 5 ? 9 - fromY : fromY);
-	return (toVal - fromVal);
+	return moveValue(fromX, fromY, toX, toY);
 }
 
 
