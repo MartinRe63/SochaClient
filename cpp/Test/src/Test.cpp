@@ -41,7 +41,7 @@ void testListManager()
 				childListId = childArr[id] = ilm->ReserveList();
 				int lth = rand() % 60;
 				smallNode j;
-				j.isSuperPackedMove = 0;
+				j.smallMove.isSuperPackedMove = 0;
 				j.nodeIdx = -1;
 				IntListManager::WriteIterator* it = ilm->GetWriteIterator(childListId);
 				for ( j.nodeIdx = 0; j.nodeIdx < lth; j.nodeIdx++ )

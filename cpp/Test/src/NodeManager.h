@@ -1,6 +1,7 @@
 #pragma once
 #include "FreeArrayManager.h"
 #include "BoardManager.h"
+#include "MoveManager.h"
 
 typedef struct 
 {
@@ -27,7 +28,7 @@ typedef struct
 
 struct smallNode {
 	union {
-		unsigned int isSuperPackedMove : 1, packedMove : 31;
+		superPackedMove smallMove;
 		unsigned int isNoNodeIdx : 1, nodeIdx : 31;
 	};
 };
@@ -39,9 +40,8 @@ public:
 	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth );
 	~NodeManager();
 
-	static smallNode superPackMove( int fromPos, int toPos );
 private: 
-	static bool hasChild(smallNode);
+	bool hasChild(smallNode);
 
 	m* memory;
 	int firstMoveColor;

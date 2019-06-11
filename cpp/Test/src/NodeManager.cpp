@@ -2,6 +2,8 @@
 #include "BoardManager.h"
 
 static double epsilon = (float) 1e-6;
+static unsigned nullChildListId = ~(1 << 30);
+static childId nullId = { 0, 0, nullChildListId };
 
 NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth)
 {
@@ -32,12 +34,8 @@ NodeManager::~NodeManager()
 
 bool NodeManager::hasChild( smallNode sN )
 {
-	if (sN.isSuperPackedMove == 1)
+	if (sN.smallMove.isSuperPackedMove == 1)
 		return false;
-	return memory[sN.nodeIdx].node.childId > -1;
+	return memory[sN.nodeIdx].node.childId.childId < nullChildListId;
 }
 
-smallNode NodeManager::superPackMove(int fromPos, int toPos)
-{
-	return smallNode();
-}

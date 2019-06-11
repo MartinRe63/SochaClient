@@ -12,7 +12,7 @@ unsigned MoveManager::getMove(int color, board SourceBoard, board DestinationBoa
 	return 0;
 }
 
-packedMove MoveManager::PackMove( move M )
+packedMove MoveManager::PackMove( mov M )
 {
 	int fromX = M[0] % 10;
 	int fromY = M[0] / 10;
@@ -21,13 +21,13 @@ packedMove MoveManager::PackMove( move M )
 	return fromX | fromY << 4 | toX << 8 | toY << 12;
 }
 
-packedMove MoveManager::PackMove(int CoordFrom, int CoordTo)
+packedMove MoveManager::PackMove(coordinates CoordFrom, coordinates CoordTo)
 {
-	move M = { CoordFrom, CoordTo };
+	mov M = { CoordFrom, CoordTo };
 	return PackMove(M);
 }
 
-void MoveManager::UnpackMove( packedMove PM, move& M )
+void MoveManager::UnpackMove( packedMove PM, mov& M )
 {
 	int mask = 15;
 	M[0] = PM & mask; mask <<= 4;
@@ -36,7 +36,7 @@ void MoveManager::UnpackMove( packedMove PM, move& M )
 	M[1] += ((PM & mask) >> 12) * 10;
 }
 
-std::string MoveManager::CoordinatesToString(int Coord)
+std::string MoveManager::CoordinatesToString(coordinates Coord)
 {
 	int val = (int)'a';
 	return std::string(std::string((std::string(1, (const char)(val + Coord % 10)) + std::string(1, (const char)(Coord / 10)))));
@@ -44,11 +44,18 @@ std::string MoveManager::CoordinatesToString(int Coord)
 
 std::string MoveManager::packMoveToString(packedMove PM)
 {
-	move M;
+	mov M;
 
 	UnpackMove(PM, M);
 	std::string res = CoordinatesToString(M[0]) + "->" + CoordinatesToString(M[1]);
 	return res;
+}
+
+int MoveManager::moveValue(int fromX, int fromY, int toX, int toY )
+{
+	int toVal = (toX >= 5 ? 9 - toX : toX) * (toY >= 5 ? 9 - toY : toY);
+	int fromVal = (fromX >= 5 ? 9 - fromX : fromX) * (fromY >= 5 ? 9 - fromY : fromY);
+	return (toVal - fromVal);
 }
 
 int MoveManager::moveValue(packedMove PM)
@@ -62,6 +69,14 @@ int MoveManager::moveValue(packedMove PM)
 	int toVal = (toX >= 5 ? 9 - toX : toX) * (toY >= 5 ? 9 - toY : toY);
 	int fromVal = (fromX >= 5 ? 9 - fromX : fromX) * (fromY >= 5 ? 9 - fromY : fromY);
 	return (toVal - fromVal);
+}
+
+superPackedMove MoveManager::superPackMove(coordinates fromCoord, coordinates toCoord )
+{
+	superPackedMove sPM;
+	sPM.isSuperPackedMove = 1;
+	sPM.packedMove = toCoord << 7 + fromCoord;
+	return sPM;
 }
 
 
