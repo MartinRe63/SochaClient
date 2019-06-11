@@ -44,7 +44,7 @@ void BoardManager::FromString(std::string Init, board &B)
 	}
 }
 
-std::string ToString(board B)
+std::string BoardManager::ToString(board B)
 {
 	std::string res = std::string(
 		". . . . . . . . . . \r\n" ) +

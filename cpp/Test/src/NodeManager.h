@@ -1,11 +1,15 @@
 #pragma once
+#include "SuperPackedMove.h"
 #include "FreeArrayManager.h"
+#include "IntListManager.h"
 #include "BoardManager.h"
 #include "MoveManager.h"
 
 struct moveAndVisits
 {
-	unsigned int move : 8, visits : 24;
+	// unsigned int move : 8, visits : 24;
+	mov move;
+	unsigned int visits;
 };
 
 struct childId
@@ -27,12 +31,6 @@ struct m
 	};
 };
 
-struct smallNode {
-	union {
-		unsigned int isSuperPackedMove : 1, packedMove : 31;
-		unsigned int isNoNodeIdx : 1, nodeIdx : 31;
-	};
-};
 
 class NodeManager
 {
@@ -41,13 +39,18 @@ public:
 	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth );
 	~NodeManager();
 
-	static smallNode superPackMove(coordinates fromPos, coordinates toPos );
 private: 
 	bool hasChild(smallNode);
+	void InitFirstNode();
+	void InitNode(int nodeId, mov move, long visitCnt);
+
 
 	m* memory;
 	int firstMoveColor;
 	int firstMoveDepth;
+	int firstNodeIdx;
 	boardpane* firstBoard;
+	FreeArrayManager* fam;
+	void* ilm;
 };
 

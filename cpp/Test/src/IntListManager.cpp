@@ -1,3 +1,5 @@
+#pragma once
+
 #include <crtdbg.h>
 #include <stdexcept>
 #include "IntListManager.h"

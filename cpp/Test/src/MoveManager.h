@@ -8,13 +8,12 @@
 #ifndef MOVEMANAGER_H_
 #define MOVEMANAGER_H_
 #include "BoardManager.h"
+#include "SuperPackedMove.h"
 
 typedef unsigned packedMove;
 typedef int coordinates;
 typedef coordinates mov[2];
-struct superPackedMove {
-	unsigned int isSuperPackedMove : 1, packedMove : 31;
-};
+
 
 //
 class MoveManager {
@@ -29,8 +28,11 @@ public:
     static inline void CoordinatesToXY(coordinates Coord, int* x, int* y);
 	static std::string packMoveToString(packedMove move);
 
-	static int moveValue(int fromX, int fromY, int toX, int toY);
-	static int moveValue(packedMove PM);
+	static inline int moveValue(int fromX, int fromY, int toX, int toY);
+	static inline int moveValue(superPackedMove sPM);
+	static inline int moveValue(packedMove PM);
+	static superPackedMove superPackMove(coordinates fromPos, coordinates toPos);
+
 	
 };
 
