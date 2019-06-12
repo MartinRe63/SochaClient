@@ -45,13 +45,30 @@ void NodeManager::InitFirstNode()
 	InitNode(firstNodeIdx, 0, 1);
 }
 
-void NodeManager::InitNode(int nodeId, mov move, long visitCnt)
+void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
 {
 	m* node = &memory[nodeId];
 	node->node.child.id = nullChildId;
 	node->node.totValue = 0.5f;
 	node->node.v.visits = visitCnt;
-	// node->node.v.move = move;
+	node->node.v.move = move;
 	// ((IntListManager*)ilm)->GetLength(i);
 }
 
+void NodeManager::expandNode(int nodeId, int moveColor, board position, int depth)
+{
+	// fill the childList with valid moves based on the current position
+	_ASSERT_EXPR( fam->IsUsed(nodeId), "Software Issue - Node is not available." );
+	_ASSERT_EXPR( memory[nodeId].node.child.id == nullChildId, "Software Issue - Childs available.");
+
+	int childListId = memory[nodeId].node.child.id = ilm->ReserveList();
+	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList);
+	IntListManager::WriteIterator* wIt = ilm->GetWriteIterator(childListId);
+	for (int i = 0; i < moveCnt; i++) {
+		int childNodeId;
+		smallNode sN; 
+		sN.sPM = MoveManager::superPackMove(moveList[i]);
+		wIt->AddItem(sN); // children[i] = new TreeNode();
+		InitNode(childNodeId, moveList[i], depth < 60 ? 1 : LONG_MAX);
+	}
+}

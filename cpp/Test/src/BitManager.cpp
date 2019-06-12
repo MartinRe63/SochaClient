@@ -47,11 +47,11 @@ int BitManager::NumberOfTrailingZeros(uint64_t low, uint64_t high)
 	return ret;
 }
 
-int BitManager::GetFirstRightBitPos(long low, long high)
+int BitManager::GetFirstRightBitPos(uint64_t low, uint64_t high)
 {
 	return NumberOfTrailingZeros(low, high);
 }
-int BitManager::GetNextRightBitPos(long low, long high, int currentPos)
+int BitManager::GetNextRightBitPos(uint64_t low, uint64_t high, int currentPos)
 {
 	_ASSERT_EXPR(GetFirstRightBitPos(low, high) >= currentPos, "bit found before " + currentPos);
 	if (currentPos >= 64)
@@ -64,7 +64,7 @@ int BitManager::GetNextRightBitPos(long low, long high, int currentPos)
 	}
 	return (GetFirstRightBitPos(low, high));
 }
-int BitManager::GetNextRightBitPosIgnorePrevious(long low, long high, int currentPos)
+int BitManager::GetNextRightBitPosIgnorePrevious(uint64_t low, uint64_t high, int currentPos)
 {
 	int p = GetFirstRightBitPos(low, high);
 	// switch of current pos in copied data

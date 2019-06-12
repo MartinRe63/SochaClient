@@ -8,7 +8,7 @@
 struct moveAndVisits
 {
 	// unsigned int move : 8, visits : 24;
-	mov move;
+	packedMove move;
 	unsigned int visits;
 };
 
@@ -31,7 +31,7 @@ struct m
 	};
 };
 
-
+class IntListManager;
 class NodeManager
 {
 
@@ -42,7 +42,9 @@ public:
 private: 
 	bool hasChild(smallNode);
 	void InitFirstNode();
-	void InitNode(int nodeId, mov move, long visitCnt);
+	void InitNode(int nodeId, packedMove move, long visitCnt);
+
+	void expandNode(int nodeId, int moveColor, board position, int depth);
 
 
 	m* memory;
@@ -51,6 +53,7 @@ private:
 	int firstNodeIdx;
 	boardpane* firstBoard;
 	FreeArrayManager* fam;
-	void* ilm;
+	IntListManager* ilm;
+	packedMove moveList[16*8]; // all fishes might move into all directions
 };
 

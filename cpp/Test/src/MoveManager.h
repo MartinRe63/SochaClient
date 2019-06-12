@@ -33,6 +33,11 @@ public:
 	static inline int moveValue(packedMove PM);
 	static superPackedMove superPackMove(coordinates fromPos, coordinates toPos);
 
+	static superPackedMove superPackMove(packedMove PM);
+
+	static coordinates movePossible(int x, int y, int dir, int lth, board positionData, int color, boardpane superlong);
+	static int getMoveList(board positionData, int color, packedMove moves[]);
+
 	
 };
 

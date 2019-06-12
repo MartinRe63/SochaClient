@@ -15,19 +15,22 @@ class BitManager {
 public:
 	static void SetBit( uint64_t pos[], int bitId );
 
-	static uint64_t BitCnt(uint64_t pos[])
+	static inline uint64_t BitCount(uint64_t u)
+	{
+		return __popcnt64(u);
+	}
+	static inline uint64_t BitCnt(uint64_t pos[])
 	{
 		return __popcnt64(pos[0]) + __popcnt64(pos[1]);
-		return 0;
 	}
 
 	static void ClearBit( uint64_t pos[], int bitId );
 	static bool IsBit( uint64_t pos[], int bitId );
 
 	static int NumberOfTrailingZeros(uint64_t low, uint64_t high);
-	static int GetFirstRightBitPos(long low, long high);
-	static int GetNextRightBitPos(long low, long high, int currentPos);
-	static int GetNextRightBitPosIgnorePrevious(long low, long high, int currentPos);
+	static int GetFirstRightBitPos(uint64_t low, uint64_t high);
+	static int GetNextRightBitPos(uint64_t low, uint64_t high, int currentPos);
+	static int GetNextRightBitPosIgnorePrevious(uint64_t low, uint64_t high, int currentPos);
 };
 
 #endif /* BITMANAGER_H_ */
