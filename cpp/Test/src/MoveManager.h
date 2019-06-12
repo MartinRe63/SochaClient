@@ -8,14 +8,12 @@
 #ifndef MOVEMANAGER_H_
 #define MOVEMANAGER_H_
 #include "BoardManager.h"
+#include "SuperPackedMove.h"
 
 typedef unsigned packedMove;
 typedef int coordinates;
 typedef coordinates mov[2];
-struct superPackedMove
-{
-	unsigned int isSuperPackedMove : 1, packedMove : 31;
-};
+
 
 //
 class MoveManager {
@@ -27,13 +25,19 @@ public:
 	static void UnpackMove(packedMove PM, mov& M);
 
 	static std::string CoordinatesToString(coordinates Coord);
-    static void CoordinatesToXY(coordinates Coord, int* x, int* y);
+    static inline void CoordinatesToXY(coordinates Coord, int* x, int* y);
 	static std::string packMoveToString(packedMove move);
 
-	inline static int moveValue(superPackedMove SPM );
-	inline static int moveValue(int fromX, int fromY, int toX, int toY );
-	inline static int moveValue(packedMove PM);
-	static superPackedMove superPackMove( coordinates fromCoord, coordinates toCoord );
+	static inline int moveValue(int fromX, int fromY, int toX, int toY);
+	static inline int moveValue(superPackedMove sPM);
+	static inline int moveValue(packedMove PM);
+	static superPackedMove superPackMove(coordinates fromPos, coordinates toPos);
+
+	static superPackedMove superPackMove(packedMove PM);
+
+	static coordinates movePossible(int x, int y, int dir, int lth, board positionData, int color, boardpane superlong);
+	static int getMoveList(board positionData, int color, packedMove moves[]);
+
 	
 };
 

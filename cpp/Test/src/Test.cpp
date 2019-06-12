@@ -40,8 +40,8 @@ void testListManager()
 			{
 				childListId = childArr[id] = ilm->ReserveList();
 				int lth = rand() % 60;
-				smallNode j;
-				j.smallMove.isSuperPackedMove = 0;
+				smallNode j; // = smallNode(0, 0);
+				j.sPM.isSuperPackedMove = 0;
 				j.nodeIdx = -1;
 				IntListManager::WriteIterator* it = ilm->GetWriteIterator(childListId);
 				for ( j.nodeIdx = 0; j.nodeIdx < lth; j.nodeIdx++ )
@@ -57,6 +57,8 @@ void testListManager()
 			{
 				int lth = ilm->GetLength(childListId);
 				IntListManager::ReadIterator* it = ilm->GetReadIterator(childListId);
+				smallNode* s = it->GetNextItem();
+				s->nodeIdx;
 				for (int j = 0; j < lth; j++)
 					_ASSERT_EXPR(it->GetNextItem()->nodeIdx == j, "Software issue - wrong Data found in the List.");
 			}

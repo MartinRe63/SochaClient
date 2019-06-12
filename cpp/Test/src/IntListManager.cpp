@@ -1,3 +1,5 @@
+#pragma once
+
 #include <crtdbg.h>
 #include <stdexcept>
 #include "IntListManager.h"
@@ -110,4 +112,3 @@ void IntListManager::WriteIterator::AddItem( smallNode n )
 		ilm->data[blockIdx].s.h.nextIdx = endMarker;
 	}
 }
-

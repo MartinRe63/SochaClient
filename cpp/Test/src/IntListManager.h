@@ -1,5 +1,7 @@
 #pragma once
+
 #include "FreeArrayManager.h"
+#include "SuperPackedMove.h"
 #include "NodeManager.h"
 
 const int blockDataSize = 10;

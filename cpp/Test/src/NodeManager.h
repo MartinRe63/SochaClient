@@ -1,38 +1,37 @@
 #pragma once
+#include "SuperPackedMove.h"
 #include "FreeArrayManager.h"
+#include "IntListManager.h"
 #include "BoardManager.h"
 #include "MoveManager.h"
 
-typedef struct 
+struct moveAndVisits
 {
-	unsigned int move : 8, visits : 24;
-} moveAndVisits;
-typedef struct
-{
-	unsigned int reserved: 1, syncSignal: 1, childId : 30;
-} childId;
+	// unsigned int move : 8, visits : 24;
+	packedMove move;
+	unsigned int visits;
+};
 
-typedef struct
+struct childId
 {
-    childId childId;
+	unsigned int reserved: 1, syncSignal: 1, id : 30;
+};
+
+struct node
+{
+    childId child;
 	float totValue;
 	moveAndVisits v;
-} node;
-typedef struct
+};
+struct m
 {
 	union {
 		node node;
 		nextFreeId free;
 	};
-} m;
-
-struct smallNode {
-	union {
-		superPackedMove smallMove;
-		unsigned int isNoNodeIdx : 1, nodeIdx : 31;
-	};
 };
 
+class IntListManager;
 class NodeManager
 {
 
@@ -42,11 +41,18 @@ public:
 
 private: 
 	bool hasChild(smallNode);
-	void initNode ( int nodeId, mov move, long visitCnt );
+	void InitFirstNode();
+	void InitNode(int nodeId, packedMove move, long visitCnt);
+
+	void expandNode(int nodeId, int moveColor, board position, int depth);
+
 
 	m* memory;
 	int firstMoveColor;
 	int firstMoveDepth;
+	int firstNodeIdx;
 	boardpane* firstBoard;
+	FreeArrayManager* fam;
+	IntListManager* ilm;
+	packedMove moveList[16*8]; // all fishes might move into all directions
 };
-
