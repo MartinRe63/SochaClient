@@ -22,7 +22,8 @@ public:
 	static packedMove PackMove(mov M);
 	static packedMove PackMove(coordinates CoordFrom, coordinates CoordTo);
 
-	static void UnpackMove(packedMove PM, mov& M);
+	static void UnpackMove( packedMove PM, mov& M );
+	static void UnpackMove( superPackedMove SPM, mov& M );
 
 	static std::string CoordinatesToString(coordinates Coord);
     static inline void CoordinatesToXY(coordinates Coord, int* x, int* y);
@@ -34,6 +35,7 @@ public:
 	static superPackedMove superPackMove(coordinates fromPos, coordinates toPos);
 
 	static superPackedMove superPackMove(packedMove PM);
+	static packedMove superPack2packMove( superPackedMove SPM );
 
 	static coordinates movePossible(int x, int y, int dir, int lth, board positionData, int color, boardpane superlong);
 	static int getMoveList(board positionData, int color, packedMove moves[]);

@@ -44,8 +44,8 @@ private:
 	void InitFirstNode();
 	void InitNode(int nodeId, packedMove move, long visitCnt);
 
-	void expandNode(int nodeId, int moveColor, board position, int depth);
-
+	void expandNode(smallNode* sN , int moveColor, board position, int depth);
+	double rollOut( int nodeId, int color, board pos, int depth );
 
 	m* memory;
 	int firstMoveColor;
@@ -55,4 +55,6 @@ private:
 	FreeArrayManager* fam;
 	IntListManager* ilm;
 	packedMove moveList[16*8]; // all fishes might move into all directions
+	boardpane blockList[2][16]; // all blocks of a board
+	int blockCnt[2]; // blocklist for red and blue
 };

@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include "BitManager.h"
 #include "MoveManager.h"
 #include "MaskManager.h"
 
@@ -37,6 +38,13 @@ void MoveManager::UnpackMove( packedMove PM, mov& M )
 	M[1] = (PM & mask) >> 8; mask <<= 4;
 	M[1] += ((PM & mask) >> 12) * 10;
 }
+
+void MoveManager::UnpackMove( superPackedMove SPM, mov& M )
+{
+	M[0] = SPM.packedMove % 128;
+	M[1] = SPM.packedMove / 128;
+}
+
 
 std::string MoveManager::CoordinatesToString(coordinates Coord)
 {
@@ -100,6 +108,13 @@ superPackedMove MoveManager::superPackMove(packedMove PM)
 	ret.isSuperPackedMove = 1;
 	ret.packedMove = m[1] * 128 + m[0];
 	return ret;
+}
+
+packedMove MoveManager::superPack2packMove( superPackedMove SPM )
+{
+	mov m;
+	MoveManager::UnpackMove( SPM, m );
+	return MoveManager::PackMove( m );
 }
 
 coordinates MoveManager::movePossible(int x, int y, int dir, int lth, board positionData, int color, boardpane superlong)
@@ -167,7 +182,6 @@ coordinates MoveManager::movePossible(int x, int y, int dir, int lth, board posi
 
 int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 {
-	long mask = 1L;
 	int moveCnt = 0;
 	boardpane long128; // used by movePossible
 	board pos;

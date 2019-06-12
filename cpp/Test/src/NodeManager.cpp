@@ -3,6 +3,7 @@
 
 static double epsilon = (float) 1e-6;
 static unsigned nullChildId = ~(1 << 30);
+static unsigned maxVisits = ~(1 << 30);
 
 NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth)
 {
@@ -55,20 +56,37 @@ void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
 	// ((IntListManager*)ilm)->GetLength(i);
 }
 
-void NodeManager::expandNode(int nodeId, int moveColor, board position, int depth)
+void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int depth)
 {
 	// fill the childList with valid moves based on the current position
-	_ASSERT_EXPR( fam->IsUsed(nodeId), "Software Issue - Node is not available." );
+	_ASSERT_EXPR( SN->isNoNodeIdx == 0, "This node is already expanded.");
+	int nodeId = fam->ReserveNextFree();
+	InitNode(nodeId, MoveManager::superPack2packMove(SN->sPM), depth < 60 ? 1 : maxVisits);
+	superPackedMove sPM = SN->sPM;
+	SN->isNoNodeIdx = 0;
+	SN->nodeIdx = nodeId;
 	_ASSERT_EXPR( memory[nodeId].node.child.id == nullChildId, "Software Issue - Childs available.");
 
 	int childListId = memory[nodeId].node.child.id = ilm->ReserveList();
 	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList);
 	IntListManager::WriteIterator* wIt = ilm->GetWriteIterator(childListId);
 	for (int i = 0; i < moveCnt; i++) {
-		int childNodeId;
 		smallNode sN;
 		sN.sPM = MoveManager::superPackMove(moveList[i]);
 		wIt->AddItem(sN); // children[i] = new TreeNode();
-		InitNode(childNodeId, moveList[i], depth < 60 ? 1 : LONG_MAX);
+		//
+		// here a super packed move is added - later
+		//
+		// - InitNode(childNodeId, moveList[i], depth < 60 ? 1 : maxVisits);
 	}
 }
+
+double NodeManager::rollOut( int nodeId, int color, board pos, int depth )
+{
+	// calculate the value of this position
+	// here to count number of blocks and calculate the block value
+	// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
+	return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth);
+}
+
+
