@@ -47,14 +47,23 @@ private:
 	void expandNode(smallNode* sN , int moveColor, board position, int depth);
 	double rollOut( int nodeId, int color, board pos, int depth );
 
+	smallNode * selectMove(smallNode * sN);
+
+	void selectAction(bool oneCycle);
+
 	m* memory;
 	int firstMoveColor;
 	int firstMoveDepth;
-	int firstNodeIdx;
+	smallNode firstNodeIdx;
 	boardpane* firstBoard;
 	FreeArrayManager* fam;
 	IntListManager* ilm;
 	packedMove moveList[16*8]; // all fishes might move into all directions
 	boardpane blockList[2][16]; // all blocks of a board
 	int blockCnt[2]; // blocklist for red and blue
+	bool stopSelection;
+	int visitedCnt;
+	smallNode* visited[60];
+	board firstPosition;
+	board pos;
 };

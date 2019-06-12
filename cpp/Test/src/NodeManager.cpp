@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "NodeManager.h"
 #include "BoardManager.h"
 
@@ -42,8 +43,10 @@ bool NodeManager::hasChild( smallNode sN )
 
 void NodeManager::InitFirstNode()
 {
-	firstNodeIdx = fam->ReserveNextFree();
-	InitNode(firstNodeIdx, 0, 1);
+	firstNodeIdx.sPM.isSuperPackedMove = 1;
+	firstNodeIdx.sPM.packedMove = 0;
+	// fam->ReserveNextFree();
+	// InitNode(firstNodeIdx, 0, 1);
 }
 
 void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
@@ -89,4 +92,132 @@ double NodeManager::rollOut( int nodeId, int color, board pos, int depth )
 	return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth);
 }
 
+smallNode* NodeManager::selectMove(smallNode* sN) 
+{
+	smallNode* selectedNode = 0;
+	double bestValue = DBL_MIN; //  Double.NEGATIVE_INFINITY;
+	if (sN->sPM.isSuperPackedMove == 1)
+		return sN;
+	m* node = &memory[sN->nodeIdx];
+	_ASSERT_EXPR(node->node.child.id != nullChildId, "each node should have a child list.");
+	IntListManager::ReadIterator* i = ilm->GetReadIterator(node->node.child.id);
+	smallNode* iSN = i->GetNextItem();
+	while ( iSN != 0 ) {
+		int moveValue;
+		long visitCnt = 1;
+		double totValue = 0.5;
+		if (iSN->sPM.isSuperPackedMove == 1)
+		{
+			moveValue = MoveManager::moveValue(iSN->sPM);
+		}
+		else
+		{
+			m* childNode = &memory[iSN->nodeIdx];
+			moveValue = MoveManager::moveValue(childNode->node.v.move);
+			visitCnt = childNode->node.v.visits;
+			totValue = childNode->node.totValue;
+		}
+		int childNodeId = iSN->isNoNodeIdx;
 
+		// childvisits == 0, when the end is reached
+		double r = 1 / (rand() + 1);
+		double uctValue =
+			totValue / (visitCnt + epsilon) +
+			std::sqrt(std::log(node->node.v.visits + 1) / (visitCnt + epsilon)) +
+			r * epsilon + moveValue * 10 * epsilon;
+
+		// small random number to break ties randomly in unexpanded nodes
+		// System.out.println("UCT value = " + uctValue + "  tot = " + totValue + " " + PosManager.packMoveToString(move));
+
+		if (uctValue > bestValue) {
+			selectedNode = iSN;
+			bestValue = uctValue;
+		}
+		iSN = i->GetNextItem;
+	}
+	// System.out.println("Returning: " + selected);
+	_ASSERT_EXPR( selectedNode != 0, "Child not found." );
+	return selectedNode;
+}
+
+
+void NodeManager::selectAction(bool oneCycle) 
+{
+
+	while (!stopSelection)
+	{
+		if (oneCycle)
+			stopSelection = true;
+		visitedCnt = 0;
+		smallNode* cur = &firstNodeIdx;
+		visited[visitedCnt++] = cur;
+		int nextMoveColor = firstMoveColor;
+		BoardManager::Copy(firstPosition, pos);
+
+		while ( ! cur->sPM.isSuperPackedMove == 1 ) // ! isLeaf 
+		{
+			cur = selectMove(cur);
+
+			// System.out.println("Adding: " + cur);
+			visited[visitedCnt++] = cur;                          // visited.add(cur);
+			// BoardManager::movePosition(cur, fishMove, pos, nextMoveColor);
+			nextMoveColor = (nextMoveColor + 1) % 2;
+		}
+		if (memory[cur->nodeIdx].node.v.visits > 0)
+		{
+			// expand only if this is no game end node
+			expandNode(cur, nextMoveColor, pos, visitedCnt);                    //  cur.expand();
+			cur = selectMove(cur);                        // TreeNode newNode = cur.select();
+
+			visited[visitedCnt++] = cur;                        // visited.add(newNode);
+			movePosition(cur, fishMove, pos, nextMoveColor);
+			nextMoveColor = (nextMoveColor + 1) % 2;
+		}
+
+		visitedCnt--; // back to the current level it's also showing the current depth
+		nextMoveColor = (nextMoveColor + 1) % 2;  // switch also the color back
+
+		boolean foundGameEnd = false;
+		double value = 0;
+		if (visits[cur] != 0)
+		{
+			try
+			{
+				value = rollOut(cur, nextMoveColor, pos, visitedCnt);
+			}
+			catch (PosManager.GameEndException e)
+			{
+				foundGameEnd = true;
+				value = e.res;
+			}
+		}
+		else
+		{
+			value = totalValue[cur];
+			foundGameEnd = true;
+		}
+		// int visitedMoveColor = nextMoveColor;
+		maxDepth = (visitedCnt > maxDepth) ? visitedCnt : maxDepth;
+		for (int k = visitedCnt; k >= 0; k--)                  // for (TreeNode node : visited) 
+		{
+			// System.out.println(node);
+			int visitedNode = visited[k];
+			if (foundGameEnd && k == visitedCnt)
+			{
+				// System.out.println(PosManager.ToString(pos));
+				visits[visitedNode] = 0;
+				totalValue[visitedNode] = (float)value;
+			}
+			else
+			{
+				updateStat(visitedNode, value);
+			}
+			// node.updateStats(value);
+
+			// based on some internet python code values to be added and inverted
+			value = 1 - value;
+		}
+		// mark game end node with visited = -1
+	}
+	stopSelection = false;
+}

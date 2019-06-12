@@ -3,3 +3,9 @@
 ################################################################################
 
 /cpp/.vs/Test1/v15
+/cpp/x64/Debug
+/cpp/Debug
+/cpp/Test1.vcxproj.user
+/cpp/Test1.vcxproj.filters
+/cpp/Test1.vcxproj
+/cpp/Test1.sln
