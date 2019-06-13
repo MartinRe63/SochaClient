@@ -66,13 +66,13 @@ std::string MoveManager::packMoveToString(packedMove PM)
 	std::string res = CoordinatesToString(M[0]) + "->" + CoordinatesToString(M[1]);
 	return res;
 }
-int MoveManager::moveValue(int fromX, int fromY, int toX, int toY)
+inline int MoveManager::moveValue(int fromX, int fromY, int toX, int toY)
 {
 	int toVal = (toX >= 5 ? 9 - toX : toX) * (toY >= 5 ? 9 - toY : toY);
 	int fromVal = (fromX >= 5 ? 9 - fromX : fromX) * (fromY >= 5 ? 9 - fromY : fromY);
 	return (toVal - fromVal);
 }
-int MoveManager::moveValue(superPackedMove sPM)
+int MoveManager::moveValueSPM(superPackedMove sPM)
 {
 	int from = sPM.packedMove % 128;
 	int to = sPM.packedMove / 128;
@@ -82,7 +82,7 @@ int MoveManager::moveValue(superPackedMove sPM)
 	int toY = to / 10;
 	return moveValue(fromX, fromY, toX, toY);
 }
-int MoveManager::moveValue(packedMove PM)
+int MoveManager::moveValuePM(packedMove PM)
 {
 	int mask = 15;
 	int fromX = (PM & mask); mask <<= 4;
@@ -92,7 +92,7 @@ int MoveManager::moveValue(packedMove PM)
 	return moveValue(fromX, fromY, toX, toY);
 }
 
-superPackedMove MoveManager::superPackMove(coordinates fromPos, coordinates toPos)
+inline superPackedMove MoveManager::superPackMove(coordinates fromPos, coordinates toPos)
 {
 	superPackedMove ret;
 	ret.isSuperPackedMove = 1;
@@ -208,4 +208,25 @@ int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 		p = BitManager::GetNextRightBitPos(pos[color][0], pos[color][1], p);
 	}
 	return moveCnt;
+}
+
+void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
+{
+	mov move;
+	MoveManager::UnpackMove(PM, move);
+
+	// try to enable register usage
+	int moveFrom = move[0];
+	int moveTo = move[1];
+
+	_ASSERT_EXPR( BitManager::IsBit(positionData[color], moveFrom), "unknown software issue - fish to move is not at the position to move from.");
+	_ASSERT_EXPR( ! PosManager.IsBit(positionData[color], moveTo ), "unknown software issue - at the moveto position is a fish of the same color.");
+	_ASSERT_EXPR( ! PosManager.IsBit(positionData[2], moveTo ), "unknown software issue - at the moveto position is a crake.");
+
+	BitManager::ClearBit(positionData[color], moveFrom );
+	BitManager::SetBit(positionData[color], moveTo );
+	if ( BitManager::IsBit(positionData[(color+1)%2], moveTo ) )
+		// remove opposite color fish if available
+		BitManager::ClearBit(positionData[(color+1)%2], moveTo );
+
 }

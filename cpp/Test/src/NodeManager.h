@@ -45,11 +45,12 @@ private:
 	void InitNode(int nodeId, packedMove move, long visitCnt);
 
 	void expandNode(smallNode* sN , int moveColor, board position, int depth);
-	double rollOut( int nodeId, int color, board pos, int depth );
+	double rollOut( int color, board pos, int depth );
 
 	smallNode * selectMove(smallNode * sN);
 
 	void selectAction(bool oneCycle);
+	void updateStat( int nodeId, double value );
 
 	m* memory;
 	int firstMoveColor;
@@ -66,4 +67,5 @@ private:
 	smallNode* visited[60];
 	board firstPosition;
 	board pos;
+	int maxDepth;
 };

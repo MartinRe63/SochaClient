@@ -1,3 +1,5 @@
+#include <math.h>
+#include <float.h>
 #include <stdlib.h>
 #include "NodeManager.h"
 #include "BoardManager.h"
@@ -9,7 +11,6 @@ static unsigned maxVisits = ~(1 << 30);
 NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth)
 {
 
-	boardpane crake;
 	// node properties
 	//
 	//int[] fishMove;
@@ -62,14 +63,20 @@ void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
 void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int depth)
 {
 	// fill the childList with valid moves based on the current position
-	_ASSERT_EXPR( SN->isNoNodeIdx == 0, "This node is already expanded.");
+	_ASSERT_EXPR( SN->sPM.isSuperPackedMove == 1, "This node is already expanded.");
+
+	//
+	// expand the packed Node Info
+	//
 	int nodeId = fam->ReserveNextFree();
 	InitNode(nodeId, MoveManager::superPack2packMove(SN->sPM), depth < 60 ? 1 : maxVisits);
-	superPackedMove sPM = SN->sPM;
 	SN->isNoNodeIdx = 0;
 	SN->nodeIdx = nodeId;
 	_ASSERT_EXPR( memory[nodeId].node.child.id == nullChildId, "Software Issue - Childs available.");
 
+	//
+	// and expand all his children
+	//
 	int childListId = memory[nodeId].node.child.id = ilm->ReserveList();
 	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList);
 	IntListManager::WriteIterator* wIt = ilm->GetWriteIterator(childListId);
@@ -77,14 +84,10 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 		smallNode sN;
 		sN.sPM = MoveManager::superPackMove(moveList[i]);
 		wIt->AddItem(sN); // children[i] = new TreeNode();
-		//
-		// here a super packed move is added - later
-		//
-		// - InitNode(childNodeId, moveList[i], depth < 60 ? 1 : maxVisits);
 	}
 }
 
-double NodeManager::rollOut( int nodeId, int color, board pos, int depth )
+double NodeManager::rollOut( int color, board pos, int depth )
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
@@ -108,16 +111,15 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 		double totValue = 0.5;
 		if (iSN->sPM.isSuperPackedMove == 1)
 		{
-			moveValue = MoveManager::moveValue(iSN->sPM);
+			moveValue = MoveManager::moveValueSPM(iSN->sPM);
 		}
 		else
 		{
 			m* childNode = &memory[iSN->nodeIdx];
-			moveValue = MoveManager::moveValue(childNode->node.v.move);
+			moveValue = MoveManager::moveValuePM(childNode->node.v.move);
 			visitCnt = childNode->node.v.visits;
 			totValue = childNode->node.totValue;
 		}
-		int childNodeId = iSN->isNoNodeIdx;
 
 		// childvisits == 0, when the end is reached
 		double r = 1 / (rand() + 1);
@@ -133,11 +135,17 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 			selectedNode = iSN;
 			bestValue = uctValue;
 		}
-		iSN = i->GetNextItem;
+		iSN = i->GetNextItem();
 	}
 	// System.out.println("Returning: " + selected);
 	_ASSERT_EXPR( selectedNode != 0, "Child not found." );
 	return selectedNode;
+}
+
+void NodeManager::updateStat( int nodeId, double value )
+{
+	memory[nodeId].node.v.visits ++;
+	memory[nodeId].node.totValue += (float)value;
 }
 
 
@@ -154,61 +162,67 @@ void NodeManager::selectAction(bool oneCycle)
 		int nextMoveColor = firstMoveColor;
 		BoardManager::Copy(firstPosition, pos);
 
-		while ( ! cur->sPM.isSuperPackedMove == 1 ) // ! isLeaf 
+		while ( cur->sPM.isSuperPackedMove != 1 ) // ! isLeaf
 		{
 			cur = selectMove(cur);
 
 			// System.out.println("Adding: " + cur);
-			visited[visitedCnt++] = cur;                          // visited.add(cur);
-			// BoardManager::movePosition(cur, fishMove, pos, nextMoveColor);
+			visited[visitedCnt++] = cur; // visited.add(cur);
+			packedMove pM;
+			if ( cur->sPM.isSuperPackedMove == 1 )
+			{
+				pM = MoveManager::superPack2packMove(cur->sPM);
+			}
+			else
+			{
+				pM = memory[cur->nodeIdx].node.v.move;
+			}
+			MoveManager::addMoveToBoard( pos, nextMoveColor, pM );
 			nextMoveColor = (nextMoveColor + 1) % 2;
 		}
-		if (memory[cur->nodeIdx].node.v.visits > 0)
+		// here cur is always a super packed move
+		if ( cur->sPM.isGameEndNode == 0 )
 		{
 			// expand only if this is no game end node
-			expandNode(cur, nextMoveColor, pos, visitedCnt);                    //  cur.expand();
-			cur = selectMove(cur);                        // TreeNode newNode = cur.select();
+			expandNode(cur, nextMoveColor, pos, visitedCnt);               //  cur.expand();
+			cur = selectMove(cur);                                         // TreeNode newNode = cur.select();
 
-			visited[visitedCnt++] = cur;                        // visited.add(newNode);
-			movePosition(cur, fishMove, pos, nextMoveColor);
+			visited[visitedCnt++] = cur;                                   // visited.add(newNode);
+			MoveManager::addMoveToBoard( pos, nextMoveColor, MoveManager::superPack2packMove(cur->sPM) );
 			nextMoveColor = (nextMoveColor + 1) % 2;
 		}
+
+		_ASSERT_EXPR( cur->sPM.isSuperPackedMove == 1, "Why is this not a small node having a move only?");
 
 		visitedCnt--; // back to the current level it's also showing the current depth
 		nextMoveColor = (nextMoveColor + 1) % 2;  // switch also the color back
 
-		boolean foundGameEnd = false;
 		double value = 0;
-		if (visits[cur] != 0)
+
+		if ( cur->sPM.isGameEndNode == 0 )
 		{
 			try
 			{
-				value = rollOut(cur, nextMoveColor, pos, visitedCnt);
+			 	value = rollOut( nextMoveColor, pos, visitedCnt );
 			}
-			catch (PosManager.GameEndException e)
+			catch ( GameEndException e)
 			{
-				foundGameEnd = true;
-				value = e.res;
+				value = e.GetResult();
+				cur->sPM.isGameEndNode = 1;
+				cur->sPM.totValue = (unsigned)value*2;
 			}
 		}
 		else
 		{
-			value = totalValue[cur];
-			foundGameEnd = true;
+			value = ((double)cur->sPM.totValue) / 2;
 		}
 		// int visitedMoveColor = nextMoveColor;
 		maxDepth = (visitedCnt > maxDepth) ? visitedCnt : maxDepth;
 		for (int k = visitedCnt; k >= 0; k--)                  // for (TreeNode node : visited) 
 		{
 			// System.out.println(node);
-			int visitedNode = visited[k];
-			if (foundGameEnd && k == visitedCnt)
-			{
-				// System.out.println(PosManager.ToString(pos));
-				visits[visitedNode] = 0;
-				totalValue[visitedNode] = (float)value;
-			}
-			else
+			int visitedNode = visited[k]->nodeIdx;
+			if ( visited[k]->isNoNodeIdx == 0 )
 			{
 				updateStat(visitedNode, value);
 			}
