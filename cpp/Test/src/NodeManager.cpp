@@ -1,12 +1,13 @@
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
+#include <list>
 #include "NodeManager.h"
 #include "BoardManager.h"
 
 static double epsilon = (float) 1e-6;
-static unsigned nullChildId = ~(1 << 30);
-static unsigned maxVisits = ~(1 << 30);
+static unsigned nullChildId = (1 << 30)-1;
+static unsigned maxVisits = (1 << 30)-1;
 
 NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth)
 {
@@ -39,7 +40,7 @@ bool NodeManager::hasChild( smallNode sN )
 {
 	if (sN.sPM.isSuperPackedMove == 1)
 		return false;
-	return memory[sN.nodeIdx].node.child.id > -1;
+	return memory[sN.node.idx].node.childs.id > -1;
 }
 
 void NodeManager::InitFirstNode()
@@ -53,7 +54,7 @@ void NodeManager::InitFirstNode()
 void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
 {
 	m* node = &memory[nodeId];
-	node->node.child.id = nullChildId;
+	node->node.childs.id = nullChildId;
 	node->node.totValue = 0.5f;
 	node->node.v.visits = visitCnt;
 	node->node.v.move = move;
@@ -70,14 +71,14 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	//
 	int nodeId = fam->ReserveNextFree();
 	InitNode(nodeId, MoveManager::superPack2packMove(SN->sPM), depth < 60 ? 1 : maxVisits);
-	SN->isNoNodeIdx = 0;
-	SN->nodeIdx = nodeId;
-	_ASSERT_EXPR( memory[nodeId].node.child.id == nullChildId, "Software Issue - Childs available.");
+	SN->node.isNoIdx = 0;
+	SN->node.idx = nodeId;
+	_ASSERT_EXPR( memory[nodeId].node.childs.id == nullChildId, "Software Issue - Childs available.");
 
 	//
 	// and expand all his children
 	//
-	int childListId = memory[nodeId].node.child.id = ilm->ReserveList();
+	int childListId = memory[nodeId].node.childs.id = ilm->ReserveList();
 	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList);
 	IntListManager::WriteIterator* wIt = ilm->GetWriteIterator(childListId);
 	for (int i = 0; i < moveCnt; i++) {
@@ -92,7 +93,14 @@ double NodeManager::rollOut( int color, board pos, int depth )
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
 	// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
-	return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth);
+	try
+	{
+		return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth);
+	}
+	catch (GameEndException& e)
+	{
+		throw e;
+	}
 }
 
 smallNode* NodeManager::selectMove(smallNode* sN) 
@@ -101,9 +109,9 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 	double bestValue = DBL_MIN; //  Double.NEGATIVE_INFINITY;
 	if (sN->sPM.isSuperPackedMove == 1)
 		return sN;
-	m* node = &memory[sN->nodeIdx];
-	_ASSERT_EXPR(node->node.child.id != nullChildId, "each node should have a child list.");
-	IntListManager::ReadIterator* i = ilm->GetReadIterator(node->node.child.id);
+	m* node = &memory[sN->node.idx];
+	_ASSERT_EXPR(node->node.childs.id != nullChildId, "each node should have a child list.");
+	IntListManager::ReadIterator* i = ilm->GetReadIterator(node->node.childs.id);
 	smallNode* iSN = i->GetNextItem();
 	while ( iSN != 0 ) {
 		int moveValue;
@@ -115,14 +123,15 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 		}
 		else
 		{
-			m* childNode = &memory[iSN->nodeIdx];
+			m* childNode = &memory[iSN->node.idx];
 			moveValue = MoveManager::moveValuePM(childNode->node.v.move);
 			visitCnt = childNode->node.v.visits;
 			totValue = childNode->node.totValue;
 		}
 
 		// childvisits == 0, when the end is reached
-		double r = 1 / (rand() + 1);
+		long lr = rand() % 1024; 
+		double r = 1.0 / (lr + 1);
 		double uctValue =
 			totValue / (visitCnt + epsilon) +
 			std::sqrt(std::log(node->node.v.visits + 1) / (visitCnt + epsilon)) +
@@ -149,7 +158,7 @@ void NodeManager::updateStat( int nodeId, double value )
 }
 
 
-void NodeManager::selectAction(bool oneCycle) 
+void NodeManager::SelectAction(bool oneCycle) 
 {
 
 	while (!stopSelection)
@@ -160,7 +169,7 @@ void NodeManager::selectAction(bool oneCycle)
 		smallNode* cur = &firstNodeIdx;
 		visited[visitedCnt++] = cur;
 		int nextMoveColor = firstMoveColor;
-		BoardManager::Copy(firstPosition, pos);
+		BoardManager::Copy(firstBoard, pos);
 
 		while ( cur->sPM.isSuperPackedMove != 1 ) // ! isLeaf
 		{
@@ -175,7 +184,7 @@ void NodeManager::selectAction(bool oneCycle)
 			}
 			else
 			{
-				pM = memory[cur->nodeIdx].node.v.move;
+				pM = memory[cur->node.idx].node.v.move;
 			}
 			MoveManager::addMoveToBoard( pos, nextMoveColor, pM );
 			nextMoveColor = (nextMoveColor + 1) % 2;
@@ -205,7 +214,7 @@ void NodeManager::selectAction(bool oneCycle)
 			{
 			 	value = rollOut( nextMoveColor, pos, visitedCnt );
 			}
-			catch ( GameEndException e)
+			catch ( GameEndException& e )
 			{
 				value = e.GetResult();
 				cur->sPM.isGameEndNode = 1;
@@ -221,8 +230,8 @@ void NodeManager::selectAction(bool oneCycle)
 		for (int k = visitedCnt; k >= 0; k--)                  // for (TreeNode node : visited) 
 		{
 			// System.out.println(node);
-			int visitedNode = visited[k]->nodeIdx;
-			if ( visited[k]->isNoNodeIdx == 0 )
+			int visitedNode = visited[k]->node.idx;
+			if ( visited[k]->node.isNoIdx == 0 )
 			{
 				updateStat(visitedNode, value);
 			}
@@ -234,4 +243,142 @@ void NodeManager::selectAction(bool oneCycle)
 		// mark game end node with visited = -1
 	}
 	stopSelection = false;
+}
+
+void NodeManager::releaseNode(smallNode NodeId, int NodeIdToExclude) 
+{
+	int listId;
+	if ( NodeId.sPM.isSuperPackedMove == 0 )
+	{
+		int nodeIdx = NodeId.node.idx;
+		if (nodeIdx != NodeIdToExclude)
+		{
+			int ListIdx = memory[NodeId.node.idx].node.childs.id;
+			IntListManager::ReadIterator* ri = ilm->GetReadIterator(ListIdx);
+			smallNode* sN = ri->GetNextItem();
+			while (sN != NULL)
+			{
+				releaseNode(*sN, NodeIdToExclude);
+				sN = ri->GetNextItem();
+			}
+			ilm->Release(ListIdx);
+			fam->DisposeAt(nodeIdx);
+		}
+	}
+}
+
+
+smallNode* NodeManager::findNode(int nodeIdx, packedMove move) 
+{
+	IntListManager::ReadIterator* ri = ilm->GetReadIterator(memory[nodeIdx].node.childs.id);
+	smallNode* sN = ri->GetNextItem();
+	while ( sN != NULL )
+	{
+		packedMove nodeMove;
+		if (sN->sPM.isSuperPackedMove == 1)
+			nodeMove = MoveManager::superPack2packMove(sN->sPM);
+		else
+			nodeMove = memory[sN->node.idx].node.v.move;
+		if (move == nodeMove)
+		{
+			return sN;
+		}
+		sN = ri->GetNextItem();
+	}
+	return NULL;
+}
+
+void NodeManager::DisposeTree(packedMove move1, packedMove move2)
+{
+	smallNode* node = findNode(firstNodeIdx.node.idx, move1);
+	_ASSERT_EXPR(node != NULL, "The first move must be a child of the first Node.");
+	// movePosition(nodeId, fishMove, pos, firstMoveColor );
+
+	node = findNode(node->node.idx, move2);
+	// if ( nodeId >= 0 )
+	// movePosition(nodeId, fishMove, pos, (firstMoveColor+1)%2 );
+	releaseNode(firstNodeIdx, node->node.idx);
+	firstNodeIdx.node.idx = node->node.idx;
+	// if (firstNode < 0)
+	//{
+	//	InitFirstNode();
+	//}
+	firstMoveDepth += 2;
+}
+
+
+
+
+packedMove NodeManager::BestMove()
+{
+	int ret = -1;
+
+	double maxTotal = -1.0;
+	packedMove bestMove = 0;
+
+	IntListManager::ReadIterator* ri = ilm->GetReadIterator(memory[firstNodeIdx.node.idx].node.childs.id);
+	smallNode* sN = ri->GetNextItem();
+	while( sN != 0 )
+	{
+		double val;
+		packedMove pM;
+		if (sN->sPM.isSuperPackedMove == 1)
+		{
+			val = 0.5 + MoveManager::moveValueSPM(sN->sPM) * epsilon;
+			pM = MoveManager::superPack2packMove(sN->sPM);
+		}
+		else
+		{
+			node n = memory[sN->node.idx].node;
+			val = n.totValue / n.v.visits;
+			pM = n.v.move;
+		}
+		if (val > maxTotal)
+		{
+			maxTotal = val;
+			bestMove = pM;
+		}
+		sN = ri->GetNextItem();
+	}
+
+	return bestMove;
+}
+
+int NodeManager::GetMaxDepth()
+{
+	return maxDepth;
+}
+
+void NodeManager::ResetMaxDepth()
+{
+	maxDepth = 0;
+}
+
+std::string NodeManager::ValuesToString()
+{
+	IntListManager::ReadIterator* ri = ilm->GetReadIterator( memory[firstNodeIdx.node.idx].node.childs.id );
+	std::list<node> l;
+	std::list<node>::iterator it;
+	smallNode* sN = ri->GetNextItem();
+	while (sN != NULL)
+	{
+		if ( sN->sPM.packedMove == 0 )
+			l.push_back(memory[sN->node.idx].node);
+		sN = ri->GetNextItem();
+	}
+	l.sort([](const node & first, const node & second)
+	{
+		unsigned int i = 0;
+		double firstVal = 0.5;
+		double secondVal = 0.5;
+		firstVal = first.totValue / first.v.visits;
+		secondVal = second.totValue / second.v.visits;
+
+		return (firstVal < secondVal);	});
+	std::string res = "";
+	for (it = l.begin(); it != l.end(); ++it)
+	{	
+		res += "move:" + MoveManager::packMoveToString(it->v.move) + " val:" + std::to_string(it->totValue / it->v.visits) + " visits:" + std::to_string( it->v.visits ) + "\r\n";
+	}
+	return res;
 }

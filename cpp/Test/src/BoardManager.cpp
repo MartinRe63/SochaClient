@@ -5,6 +5,7 @@
  *      Author: mrenneke
  */
 // #include <string>
+#include <iostream>
 #include <crtdbg.h>
 #include <intrin.h>
 #include "BoardManager.h"
@@ -29,11 +30,17 @@ void BoardManager::Copy(board Source, board Destination)
 
 void BoardManager::FromString(std::string Init, board &B)
 {
+	B[0][0] = 0;
+	B[0][1] = 0;
+	B[1][0] = 0;
+	B[1][1] = 0;
+	B[2][0] = 0;
+	B[2][1] = 0;
 	for (int y = 0; y < 10; y++)
 	{
 		for (int x = 0; x < 10; x++)
 		{
-			std::string s = Init.substr((9 - y) * 10 + x, (9 - y) * 10 + x + 1);
+			std::string s = Init.substr((9 - y) * 10 + x, 1);
 			if (s == "0")
 				BitManager::SetBit(B[0], y * 10 + x);
 			else if (s == "1")
@@ -120,8 +127,8 @@ int BoardManager::GetBlockAndCnt( boardpane posData, boardpane blockList[] )
 	// _ASSERT_EXPR ( blockList[15].length >= 2, "Software Issue. A blocklist hold the low and high long of the fishes." );
 	int cnt = 0;
 	int bitToFind = BitManager::BitCnt(posData);
-	long restFishesLow = posData[0];
-	long restFishesHigh = posData[1];
+	uint64_t restFishesLow = posData[0];
+	uint64_t restFishesHigh = posData[1];
 	while (bitToFind > 0)
 	{
 		for (int k = 0; k < 2; k++) blockList[cnt][k] = 0;
@@ -145,11 +152,11 @@ int BoardManager::GetNextRightBitPos(boardpane BP, int currentPos)
 	_ASSERT_EXPR(BitManager::GetFirstRightBitPos(BP[0], BP[1]) == currentPos, currentPos + "bit found before " + currentPos);
 	if (currentPos >= 64)
 	{
-		BP[1] &= ~(1L << (currentPos - 64));  // switch of current pos in the current position
+		BP[1] &= ~(1ULL << (currentPos - 64));  // switch of current pos in the current position
 	}
 	else
 	{
-		BP[0] &= ~(1L << currentPos);
+		BP[0] &= ~(1ULL << currentPos);
 	}
 	return (BitManager::GetFirstRightBitPos(BP[0], BP[1]));
 }
@@ -164,9 +171,10 @@ int BoardManager::GetNextRightBitPos(boardpane BP, int currentPos)
  * 1 : End reached -> Winner is red
  * 0.5 : End reached -> no Winner
  */
-double BoardManager::Analysis(int moveCnt, boardpane blockListAll[][16], int blockCount[], board pos, int MaxDepth)
+double BoardManager::Analysis(int moveCnt, boardpane blockListAll[][16], int blockCount[], board pos, int FirstDepth)
 {
-	bool roundEnd = moveCnt % 2 == 0 && moveCnt > 0;
+	int MaxDepth = 60 - FirstDepth;
+	bool roundEnd = (moveCnt + FirstDepth ) % 2 == 0 && moveCnt > 0;
 	bool gameEnd = moveCnt >= MaxDepth || (roundEnd && (blockCount[0] == 1 || blockCount[1] == 1));
 
 	if (gameEnd || roundEnd)
@@ -203,28 +211,36 @@ double BoardManager::Analysis(int moveCnt, boardpane blockListAll[][16], int blo
 }
 
 static const double factor = 0.3 / (512 * 16);
+static long long dbg_cnt = 0;
 
 double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth)
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
 	// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
+	dbg_cnt++;
+	//if (dbg_cnt == 12715)
+	//{
+	//	dbg_cnt--;
+	//}
+	
 	long valColor = GetPosValue(pos, color, blockList, blockCnt);
 	long valOppositeColor = GetPosValue(pos, (color + 1) % 2, blockList, blockCnt);
 	double ret;
 	// foundGameEnd = false;
-	if ((ret = BoardManager::Analysis(depth, blockList, blockCnt, pos, 60 - firstMoveDepth)) < 0)
+	if ((ret = BoardManager::Analysis(depth, blockList, blockCnt, pos, firstMoveDepth)) < 0)
 	{
 		ret = (valColor - valOppositeColor) * factor + 0.5;
 	}
 	else
 	{
 		// foundGameEnd = true;
+		cout << BoardManager::ToString(pos);
 		if (color == 1)
 		{
 			ret = 1 - ret;
 		}
-		throw new GameEndException(ret);
+		throw GameEndException(ret);
 	}
 	return ret;
 }

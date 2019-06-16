@@ -180,6 +180,8 @@ coordinates MoveManager::movePossible(int x, int y, int dir, int lth, board posi
 	return newP;
 }
 
+static long long dbg_cnt = 0;
+
 int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 {
 	int moveCnt = 0;
@@ -205,7 +207,9 @@ int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 			if ((newP = movePossible(x, y, dir + 4, moveLth, positionData, color, long128)) > -1)
 				moves[moveCnt++] = MoveManager::PackMove(p, newP);;
 		}
-		p = BitManager::GetNextRightBitPos(pos[color][0], pos[color][1], p);
+		int oldp = p;
+		p = BitManager::GetNextRightBitPosIgnorePrevious(pos[color][0], pos[color][1], p);
+		_ASSERT_EXPR(p > oldp, "don't run in endless cycle.");
 	}
 	return moveCnt;
 }
@@ -220,8 +224,8 @@ void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
 	int moveTo = move[1];
 
 	_ASSERT_EXPR( BitManager::IsBit(positionData[color], moveFrom), "unknown software issue - fish to move is not at the position to move from.");
-	_ASSERT_EXPR( ! PosManager.IsBit(positionData[color], moveTo ), "unknown software issue - at the moveto position is a fish of the same color.");
-	_ASSERT_EXPR( ! PosManager.IsBit(positionData[2], moveTo ), "unknown software issue - at the moveto position is a crake.");
+	_ASSERT_EXPR( ! BitManager::IsBit(positionData[color], moveTo ), "unknown software issue - at the moveto position is a fish of the same color.");
+	_ASSERT_EXPR( ! BitManager::IsBit(positionData[2], moveTo ), "unknown software issue - at the moveto position is a crake.");
 
 	BitManager::ClearBit(positionData[color], moveFrom );
 	BitManager::SetBit(positionData[color], moveTo );

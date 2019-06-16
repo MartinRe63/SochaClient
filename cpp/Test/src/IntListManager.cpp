@@ -77,7 +77,7 @@ smallNode* IntListManager::ReadIterator::GetNextItem()
 {
 	if ( virtualIdx >= ilm->GetLength( listIdx ) )
 	{
-		throw std::out_of_range("End of the list is reached.");
+		// throw std::out_of_range("End of the list is reached.");
 		return 0;
 	}
 	int nextId = virtualIdx+1;

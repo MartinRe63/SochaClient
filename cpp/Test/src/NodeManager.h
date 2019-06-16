@@ -19,7 +19,7 @@ struct childId
 
 struct node
 {
-    childId child;
+    childId childs;
 	float totValue;
 	moveAndVisits v;
 };
@@ -38,20 +38,30 @@ class NodeManager
 public:
 	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth );
 	~NodeManager();
+	void SelectAction(bool oneCycle);
+	smallNode * findNode(int nodeIdx, packedMove move);
+	void DisposeTree(packedMove move1, packedMove move2);
+	packedMove BestMove();
+	std::string ValuesToString();
+
+	int GetMaxDepth();
+	void ResetMaxDepth();
+
+	
 
 private: 
 	bool hasChild(smallNode);
 	void InitFirstNode();
 	void InitNode(int nodeId, packedMove move, long visitCnt);
+	void releaseNode(smallNode NodeId, int NodeIdToExclude);
 
 	void expandNode(smallNode* sN , int moveColor, board position, int depth);
 	double rollOut( int color, board pos, int depth );
 
 	smallNode * selectMove(smallNode * sN);
 
-	void selectAction(bool oneCycle);
 	void updateStat( int nodeId, double value );
-
+	
 	m* memory;
 	int firstMoveColor;
 	int firstMoveDepth;
@@ -65,7 +75,6 @@ private:
 	bool stopSelection;
 	int visitedCnt;
 	smallNode* visited[60];
-	board firstPosition;
 	board pos;
 	int maxDepth;
 };

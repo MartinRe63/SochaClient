@@ -3,9 +3,12 @@
 struct superPackedMove {
 	unsigned int isSuperPackedMove : 1, isGameEndNode : 1, totValue : 2, packedMove : 28;
 };
+struct superPackedNode {
+	unsigned int isNoIdx : 1, idx : 31;
+};
 struct smallNode {
 	union {
 		superPackedMove sPM;
-		unsigned int isNoNodeIdx : 1, nodeIdx : 31;
+		superPackedNode node;
 	};
 };

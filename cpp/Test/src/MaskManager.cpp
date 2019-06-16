@@ -39,13 +39,13 @@ void MaskManager::initMasks(void) {
 					while ( nextX < 10 && nextX >= 0 && nextY < 10 && nextY >= 0 )
 					{
 						bitCnt = nextX + nextY * 10;
-						lowMask |= (bitCnt < 64 ? (1L << bitCnt ) : 0);
-						highMask |= (bitCnt >= 64 ? ( 1L << (bitCnt - 64)) : 0);
+						lowMask |= (bitCnt < 64 ? (1ULL << bitCnt ) : 0);
+						highMask |= (bitCnt >= 64 ? ( 1ULL << (bitCnt - 64)) : 0);
 
 						if ( moveCnt > 0 )
 						{
-							lowMoveMask |= (bitCnt < 64 ? (1L << bitCnt ) : 0);
-							highMoveMask |= (bitCnt >= 64 ? ( 1L << (bitCnt - 64)) : 0);
+							lowMoveMask |= (bitCnt < 64 ? (1ULL << bitCnt ) : 0);
+							highMoveMask |= (bitCnt >= 64 ? ( 1ULL << (bitCnt - 64)) : 0);
 							moveMasks[corr == 1 ? dir : dir + 4][moveCnt][y*10+x][0] |= lowMoveMask;
 							moveMasks[corr == 1 ? dir : dir + 4][moveCnt][y*10+x][1] |= highMoveMask;
 							// System.out.println("dir=" + (corr == 1 ? dir : dir + 4) + " moveCnt=" + moveCnt + " coord=" + (y*10+x) + ">" + int64_t.toBinaryString(highMoveMask) + " " + int64_t.toBinaryString(lowMoveMask));
@@ -62,8 +62,8 @@ void MaskManager::initMasks(void) {
 						moveCnt++;
 					}
 				}
-				directionMasks[dir][y*10+x][0] = (long)lowMask;
-				directionMasks[dir][y*10+x][1] = (long)highMask;
+				directionMasks[dir][y*10+x][0] = lowMask;
+				directionMasks[dir][y*10+x][1] = highMask;
 				// System.out.println("dir=" + dir + " coord=" + (y*10+x) + ">" + int64_t.toBinaryString(highMask) + " " + int64_t.toBinaryString(lowMask));
 			}
 		}
@@ -84,8 +84,8 @@ std::string MaskManager::initGame() {
 	  "0........0" +
 	  "0........0" +
 	  "0........0" +
-	  "0...X....0" +
-	  "0....X...0" +
+	  "0...C....0" +
+	  "0....C...0" +
 	  "0........0" +
 	  "0........0" +
 	  "0........0" +
