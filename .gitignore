@@ -5,7 +5,11 @@
 /cpp/.vs/Test1/v15
 /cpp/x64/Debug
 /cpp/Debug
-/cpp/Test1.vcxproj.user
-/cpp/Test1.vcxproj.filters
-/cpp/Test1.vcxproj
-/cpp/Test1.sln
+
+*.tlog
+*.obj
+/cpp/x64/Release/vc141.pdb
+/cpp/x64/Release/Test1.pdb
+/cpp/x64/Release/Test1.log
+/cpp/x64/Release/Test1.ilk
+/cpp/x64/Release/Test1.exe

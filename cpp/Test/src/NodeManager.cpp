@@ -298,8 +298,11 @@ void NodeManager::DisposeTree(packedMove move1, packedMove move2)
 	node = findNode(node->node.idx, move2);
 	// if ( nodeId >= 0 )
 	// movePosition(nodeId, fishMove, pos, (firstMoveColor+1)%2 );
-	releaseNode(firstNodeIdx, node->node.idx);
-	firstNodeIdx.node.idx = node->node.idx;
+	if (node->sPM.isSuperPackedMove == 0)
+		releaseNode(firstNodeIdx, node->node.idx);
+	else
+		releaseNode(firstNodeIdx, -1);
+	firstNodeIdx = *node;
 	// if (firstNode < 0)
 	//{
 	//	InitFirstNode();
@@ -363,7 +366,7 @@ std::string NodeManager::ValuesToString()
 	smallNode* sN = ri->GetNextItem();
 	while (sN != NULL)
 	{
-		if ( sN->sPM.packedMove == 0 )
+		if ( sN->sPM.isSuperPackedMove == 0 )
 			l.push_back(memory[sN->node.idx].node);
 		sN = ri->GetNextItem();
 	}
@@ -377,7 +380,8 @@ std::string NodeManager::ValuesToString()
 
 		return (firstVal > secondVal);	});
 	std::string res = "";
-	for (it = l.begin(); it != l.end(); ++it)
+	int k = 0;
+	for (it = l.begin(); it != l.end() && k++ < 8; ++it)
 	{	
 		res += "move:" + MoveManager::packMoveToString(it->v.move) + " val:" + std::to_string(it->totValue / it->v.visits) + " visits:" + std::to_string( it->v.visits ) + "\r\n";
 	}

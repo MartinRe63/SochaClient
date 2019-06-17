@@ -160,7 +160,7 @@ void testGaming(board Pos)
 	packedMove redMove = 0;
 	packedMove blueMove = 0;
 	int moveCnt = 0;
-	long ms = 0;
+	long long ms = 0;
 
 	long expands = 0;
 	try
@@ -183,7 +183,7 @@ void testGaming(board Pos)
 
 			moveCnt++;
 			MoveManager::addMoveToBoard(Pos, 0, (redMove = redNM->BestMove()));
-			cout << (moveCnt + ". " + MoveManager::packMoveToString(redMove) + " depth:" + std::to_string(redNM->GetMaxDepth())) << endl;
+			cout << (std::to_string(moveCnt) + "." + MoveManager::packMoveToString(redMove) + " Depth:" + std::to_string(redNM->GetMaxDepth())) << endl;
 			cout << redNM->ValuesToString() << endl;
 			cout << BoardManager::ToString(Pos) << endl;
 			redNM->ResetMaxDepth();
@@ -203,13 +203,15 @@ void testGaming(board Pos)
 
 			moveCnt++;
 			MoveManager::addMoveToBoard(Pos, 1, (blueMove = blueNM->BestMove()));
-			cout << (moveCnt + ". " + MoveManager::packMoveToString(blueMove) + " depth:" + std::to_string(blueNM->GetMaxDepth())) << endl;
+			cout << (std::to_string(moveCnt) + "." + MoveManager::packMoveToString(blueMove) + " Depth:" + std::to_string(blueNM->GetMaxDepth())) << endl;
 			cout << blueNM->ValuesToString() << endl;
 			cout << BoardManager::ToString(Pos) << endl;
 			blueNM->ResetMaxDepth();
 			t->reset();
 
-			// PosManager.GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0);
+			boardpane blockList[2][16]; // all blocks of a board
+			int blockCnt[2]; // blocklist for red and blue
+			BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0);
 
 			/* Total memory currently in use by the JVM */
 			// System.out.println("Total memory (bytes): " +  Runtime.getRuntime().totalMemory() );
@@ -225,11 +227,14 @@ void testGaming(board Pos)
 			cout << "Rot hat gewonnen." << endl;
 	}
 	cout << "Nano Seconds per playout = " + std::to_string((ms * 1000000) / expands) << endl;
-
+	std::string i;
+	cin >> i;
 }
 
 int main() {
 	srand( 123456789 );
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
 	MaskManager::initMasks();
 	// testFreeArrayManager();
 	// testListManager();
