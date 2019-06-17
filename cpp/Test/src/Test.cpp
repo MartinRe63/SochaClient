@@ -185,7 +185,7 @@ void testGaming(board Pos)
 			MoveManager::addMoveToBoard(Pos, 0, (redMove = redNM->BestMove()));
 			cout << (moveCnt + ". " + MoveManager::packMoveToString(redMove) + " depth:" + std::to_string(redNM->GetMaxDepth())) << endl;
 			cout << redNM->ValuesToString() << endl;
-			cout << BoardManager::ToString(Pos);
+			cout << BoardManager::ToString(Pos) << endl;
 			redNM->ResetMaxDepth();
 			t->reset();
 
@@ -202,10 +202,10 @@ void testGaming(board Pos)
 			ms += t->elapsed();
 
 			moveCnt++;
-			MoveManager::addMoveToBoard(Pos, 0, (blueMove = blueNM->BestMove()));
+			MoveManager::addMoveToBoard(Pos, 1, (blueMove = blueNM->BestMove()));
 			cout << (moveCnt + ". " + MoveManager::packMoveToString(blueMove) + " depth:" + std::to_string(blueNM->GetMaxDepth())) << endl;
 			cout << blueNM->ValuesToString() << endl;
-			cout << BoardManager::ToString(Pos);
+			cout << BoardManager::ToString(Pos) << endl;
 			blueNM->ResetMaxDepth();
 			t->reset();
 

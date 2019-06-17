@@ -110,8 +110,8 @@ void BoardManager::ExtendBlock(boardpane posData, boardpane block, uint64_t newF
 	for (uint64_t k = 0; k < bitCnt; k++)
 	{
 		BitManager::SetBit(block, bitPos);
-		long foundNewFishesLow = MaskManager::neighborMasks[bitPos][0] & (posData[0] ^ block[0]);
-		long foundNewFishesHigh = MaskManager::neighborMasks[bitPos][1] & (posData[1] ^ block[1]);
+		uint64_t foundNewFishesLow = MaskManager::neighborMasks[bitPos][0] & (posData[0] ^ block[0]);
+		uint64_t foundNewFishesHigh = MaskManager::neighborMasks[bitPos][1] & (posData[1] ^ block[1]);
 		if (__popcnt64(foundNewFishesLow) > 0 || __popcnt64(foundNewFishesHigh) > 0)
 		{
 			int firstPos = BitManager::GetFirstRightBitPos(foundNewFishesLow, foundNewFishesHigh);
@@ -235,7 +235,11 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	else
 	{
 		// foundGameEnd = true;
-		cout << BoardManager::ToString(pos);
+		if ( firstMoveDepth < 20 )
+		{
+			cout << "Ups. Spielende gefunden. Erstaunlich. Fehler?" << endl;
+			cout << BoardManager::ToString(pos) << endl;
+		}
 		if (color == 1)
 		{
 			ret = 1 - ret;

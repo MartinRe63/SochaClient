@@ -31,6 +31,11 @@ int FreeArrayManager::ReserveNextFree()
 	firstFreeId = item->nextFreeId;
 	itemsAvailable--;
 	item->isFree = 0;
+	if ( ret > 10000 ) // 25641 )
+	{
+		ret++;
+		ret--;
+	}
 	return (ret);
 }
 void FreeArrayManager::DisposeAt(int ToFreeId)

@@ -48,8 +48,9 @@ void MoveManager::UnpackMove( superPackedMove SPM, mov& M )
 
 std::string MoveManager::CoordinatesToString(coordinates Coord)
 {
-	int val = (int)'a';
-	return std::string(std::string((std::string(1, (const char)(val + Coord % 10)) + std::string(1, (const char)(Coord / 10)))));
+	int vala = (int)'a';
+	int val0 = (int)'0';
+	return std::string(std::string((std::string(1, (const char)(vala + Coord % 10)) + std::string(1, (const char)(val0 + Coord / 10)))));
 }
 
 void MoveManager::CoordinatesToXY(coordinates Coord, int * x, int * y)

@@ -110,7 +110,8 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 	if (sN->sPM.isSuperPackedMove == 1)
 		return sN;
 	m* node = &memory[sN->node.idx];
-	_ASSERT_EXPR(node->node.childs.id != nullChildId, "each node should have a child list.");
+	_ASSERT_EXPR( node->free.isFree == 0 , "node should not be free." );
+	_ASSERT_EXPR( node->node.childs.id != nullChildId, "each node should have a child list." );
 	IntListManager::ReadIterator* i = ilm->GetReadIterator(node->node.childs.id);
 	smallNode* iSN = i->GetNextItem();
 	while ( iSN != 0 ) {
@@ -374,7 +375,7 @@ std::string NodeManager::ValuesToString()
 		firstVal = first.totValue / first.v.visits;
 		secondVal = second.totValue / second.v.visits;
 
-		return (firstVal < secondVal);	});
+		return (firstVal > secondVal);	});
 	std::string res = "";
 	for (it = l.begin(); it != l.end(); ++it)
 	{	
