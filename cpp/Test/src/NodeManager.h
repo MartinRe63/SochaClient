@@ -36,7 +36,7 @@ class NodeManager
 {
 
 public:
-	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth );
+	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth, double DeepFactor);
 	~NodeManager();
 	void SelectAction(bool oneCycle);
 	smallNode * findNode(int nodeIdx, packedMove move);
@@ -77,4 +77,5 @@ private:
 	smallNode* visited[60];
 	board pos;
 	int maxDepth;
+	double deepFactor;
 };

@@ -28,9 +28,9 @@ public:
 	static bool IsBit( uint64_t pos[], int bitId );
 
 	static int NumberOfTrailingZeros(uint64_t low, uint64_t high);
-	static int GetFirstRightBitPos(uint64_t low, uint64_t high);
-	static int GetNextRightBitPos(uint64_t low, uint64_t high, int currentPos);
-	static int GetNextRightBitPosIgnorePrevious(uint64_t low, uint64_t high, int currentPos);
+	static unsigned long GetFirstRightBitPos(uint64_t low, uint64_t high);
+	static unsigned long GetNextRightBitPos(uint64_t low, uint64_t high, int currentPos);
+	static unsigned long GetNextRightBitPosIgnorePrevious(uint64_t low, uint64_t high, int currentPos);
 };
 
 #endif /* BITMANAGER_H_ */

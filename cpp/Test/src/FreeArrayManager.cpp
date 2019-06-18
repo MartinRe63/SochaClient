@@ -1,6 +1,11 @@
 #include <exception>
+#include <iostream>
 #include <crtdbg.h>
+#include <stdlib.h>
+
 #include "FreeArrayManager.h"
+
+using namespace std;
 
 const int maxFreeId = ~(1 << 31);
 FreeArrayManager::FreeArrayManager(nextFreeId* firstArrayEntry, int ArrayLength, int ItemSize)
@@ -26,17 +31,15 @@ int FreeArrayManager::ReserveNextFree()
 	int ret = firstFreeId;
 	_ASSERT_EXPR( ret < maxFreeId, "No free Element available.");
 	if (ret >= maxFreeId || ! HasFreeItemsAvailable())
-		throw; // this should force an out of bound exception, if the result -1 is not checked.
+	{
+		// cout << "test" << endl; // (std::to_string("Itemsize:") + std::to_string(itemSize) + " no more element available.") << endl;
+		throw std::exception( "No elements available. ItemSize:" + itemSize ); // this should force an out of bound exception, if the result -1 is not checked.
+	}
 	nextFreeId* item = GetItem(firstFreeId);  // GetItem(firstFreeId);
 	_ASSERT_EXPR ( item->isFree, "Unknown Software Issue - firstFreeId is not a free item.");
 	firstFreeId = item->nextFreeId;
 	itemsAvailable--;
 	item->isFree = 0;
-	if ( ret > 10000 ) // 25641 )
-	{
-		ret++;
-		ret--;
-	}
 	return (ret);
 }
 void FreeArrayManager::DisposeAt(int ToFreeId)

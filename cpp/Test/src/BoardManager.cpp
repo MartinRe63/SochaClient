@@ -114,7 +114,7 @@ void BoardManager::ExtendBlock(boardpane posData, boardpane block, uint64_t newF
 		uint64_t foundNewFishesHigh = MaskManager::neighborMasks[bitPos][1] & (posData[1] ^ block[1]);
 		if (__popcnt64(foundNewFishesLow) > 0 || __popcnt64(foundNewFishesHigh) > 0)
 		{
-			int firstPos = BitManager::GetFirstRightBitPos(foundNewFishesLow, foundNewFishesHigh);
+			unsigned long firstPos = BitManager::GetFirstRightBitPos(foundNewFishesLow, foundNewFishesHigh);
 			ExtendBlock(posData, block, foundNewFishesLow, foundNewFishesHigh, firstPos);
 		}
 		if (k + 1 < bitCnt)

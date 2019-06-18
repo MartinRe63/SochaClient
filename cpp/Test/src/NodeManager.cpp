@@ -9,7 +9,7 @@ static double epsilon = (float) 1e-6;
 static unsigned nullChildId = (1 << 30)-1;
 static unsigned maxVisits = (1 << 30)-1;
 
-NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth)
+NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth, double DeepFactor)
 {
 
 	// node properties
@@ -30,6 +30,7 @@ NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int First
 	firstMoveColor = MyColor;
 	firstMoveDepth = FirstMoveDepth;
 	InitFirstNode();
+	deepFactor = DeepFactor;
 }
 
 
@@ -138,7 +139,7 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 		double r = 1.0 / (lr + 1);
 		double uctValue =
 			totValue / (visitCnt + epsilon) +
-			std::sqrt(std::log(node->node.v.visits + 1) / (visitCnt + epsilon)) +
+			std::sqrt(deepFactor * std::log(node->node.v.visits + 1) / (visitCnt + epsilon)) +
 			r * epsilon + moveValue * 10 * epsilon;
 
 		// small random number to break ties randomly in unexpanded nodes

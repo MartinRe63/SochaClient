@@ -170,7 +170,7 @@ void testGaming(board Pos)
 		{
 			t->reset();
 			if (redNM == NULL)
-				redNM = new NodeManager(40000000, 0, Pos, 0);
+				redNM = new NodeManager(40000000, 0, Pos, 0, 0.1);
 			else
 				redNM->DisposeTree(redMove, blueMove);
 
@@ -202,7 +202,7 @@ void testGaming(board Pos)
 			t->reset();
 
 			if (blueNM == NULL)
-				blueNM = new NodeManager(40000000, 1, Pos, 1);
+				blueNM = new NodeManager(40000000, 1, Pos, 1, 1);
 			else
 				blueNM->DisposeTree(blueMove, redMove);
 			expands = 0;
@@ -255,7 +255,7 @@ void testGaming(board Pos)
 }
 
 int main() {
-	srand( 123456789 );
+	srand( 234567891 );
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
 	MaskManager::initMasks();
