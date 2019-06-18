@@ -23,12 +23,13 @@ NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int First
 	//int childArr[];
 
 	memory = new m[NodeCount];
-	fam = new FreeArrayManager( &memory[0].free, NodeCount / 50, sizeof ( node ) );
+	fam = new FreeArrayManager( &memory[0].free, NodeCount / 40, sizeof ( node ) );
 	ilm = new IntListManager(NodeCount / 5);
 	firstBoard = FirstBoard;
 	
 	firstMoveColor = MyColor;
 	firstMoveDepth = FirstMoveDepth;
+	InitFirstNode();
 }
 
 
@@ -47,6 +48,8 @@ void NodeManager::InitFirstNode()
 {
 	firstNodeIdx.sPM.isSuperPackedMove = 1;
 	firstNodeIdx.sPM.packedMove = 0;
+	firstNodeIdx.sPM.isGameEndNode = 0;
+	firstNodeIdx.sPM.totValue = 1;
 	// fam->ReserveNextFree();
 	// InitNode(firstNodeIdx, 0, 1);
 }
@@ -248,7 +251,6 @@ void NodeManager::SelectAction(bool oneCycle)
 
 void NodeManager::releaseNode(smallNode NodeId, int NodeIdToExclude) 
 {
-	int listId;
 	if ( NodeId.sPM.isSuperPackedMove == 0 )
 	{
 		int nodeIdx = NodeId.node.idx;

@@ -51,7 +51,16 @@ int BitManager::NumberOfTrailingZeros(uint64_t low, uint64_t high)
 
 int BitManager::GetFirstRightBitPos(uint64_t low, uint64_t high)
 {
-	return NumberOfTrailingZeros(low, high);
+	unsigned long ret = 0;
+	unsigned char res = _BitScanForward64( &ret, low); // Long.numberOfTrailingZeros(low);
+	if (res == 0)
+	{
+		res = _BitScanForward64( &ret, high);
+		ret += 64;
+		if (res == 0)
+			ret += 64;
+	}
+	return ret;
 }
 int BitManager::GetNextRightBitPos(uint64_t low, uint64_t high, int currentPos)
 {

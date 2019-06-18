@@ -1,3 +1,4 @@
+#include <exception>
 #include <crtdbg.h>
 #include "FreeArrayManager.h"
 
@@ -25,7 +26,7 @@ int FreeArrayManager::ReserveNextFree()
 	int ret = firstFreeId;
 	_ASSERT_EXPR( ret < maxFreeId, "No free Element available.");
 	if (ret >= maxFreeId || ! HasFreeItemsAvailable())
-		return -1;  // this should force an out of bound exception, if the result -1 is not checked.
+		throw; // this should force an out of bound exception, if the result -1 is not checked.
 	nextFreeId* item = GetItem(firstFreeId);  // GetItem(firstFreeId);
 	_ASSERT_EXPR ( item->isFree, "Unknown Software Issue - firstFreeId is not a free item.");
 	firstFreeId = item->nextFreeId;

@@ -163,47 +163,70 @@ void testGaming(board Pos)
 	long long ms = 0;
 
 	long expands = 0;
+	long long totalExpands = 0;
 	try
 	{
 		while (true)
 		{
 			t->reset();
 			if (redNM == NULL)
-				redNM = new NodeManager(10000000, 0, Pos, 0);
+				redNM = new NodeManager(40000000, 0, Pos, 0);
 			else
 				redNM->DisposeTree(redMove, blueMove);
 
-			for (int k = 0; k < 10000; k++)
+			expands = 0;
+			for (int k = 0; k < 200000; k++)
 			{
 				redNM->SelectAction( true );
 				// System.out.println( nm.LastPositionToString() );
 				expands++;
+				if ( ( k % 100 ) == 99 )
+				{
+					int e = t->elapsed();
+					if ( e > 1950 )
+						k = INT_MAX-1;
+				}
 			}
 			ms += t->elapsed();
 
+			totalExpands += expands;
 			moveCnt++;
 			MoveManager::addMoveToBoard(Pos, 0, (redMove = redNM->BestMove()));
-			cout << (std::to_string(moveCnt) + "." + MoveManager::packMoveToString(redMove) + " Depth:" + std::to_string(redNM->GetMaxDepth())) << endl;
+			cout << (std::to_string(moveCnt) + "."
+					+ MoveManager::packMoveToString(redMove)
+					+ " Depth:" + std::to_string(redNM->GetMaxDepth())
+					+ " Expands:" + std::to_string( expands ) ) << endl;
 			cout << redNM->ValuesToString() << endl;
 			cout << BoardManager::ToString(Pos) << endl;
 			redNM->ResetMaxDepth();
 			t->reset();
 
 			if (blueNM == NULL)
-				blueNM = new NodeManager(10000000, 1, Pos, 1);
+				blueNM = new NodeManager(40000000, 1, Pos, 1);
 			else
 				blueNM->DisposeTree(blueMove, redMove);
-			for (int k = 0; k < 5000; k++)
+			expands = 0;
+			for (int k = 0; k < 200000; k++)
 			{
 				blueNM->SelectAction(true);
 				// System.out.println( nm.LastPositionToString() );
 				expands++;
+				if ( ( k % 100 ) == 99 )
+				{
+					int e = t->elapsed();
+					if ( e > 1950 )
+						k = INT_MAX-1;
+				}
 			}
 			ms += t->elapsed();
 
+			totalExpands += expands;
 			moveCnt++;
 			MoveManager::addMoveToBoard(Pos, 1, (blueMove = blueNM->BestMove()));
-			cout << (std::to_string(moveCnt) + "." + MoveManager::packMoveToString(blueMove) + " Depth:" + std::to_string(blueNM->GetMaxDepth())) << endl;
+			cout << (std::to_string(moveCnt) + "."
+					+ MoveManager::packMoveToString(blueMove)
+					+ " Depth:" + std::to_string(blueNM->GetMaxDepth())
+					+ " Expands:" + std::to_string( expands ) ) << endl;
 			cout << blueNM->ValuesToString() << endl;
 			cout << BoardManager::ToString(Pos) << endl;
 			blueNM->ResetMaxDepth();
@@ -226,7 +249,7 @@ void testGaming(board Pos)
 		else
 			cout << "Rot hat gewonnen." << endl;
 	}
-	cout << "Nano Seconds per playout = " + std::to_string((ms * 1000000) / expands) << endl;
+	cout << "Nano Seconds per playout = " + std::to_string((ms * 1000000) / totalExpands) << endl;
 	std::string i;
 	cin >> i;
 }

@@ -237,8 +237,8 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 		// foundGameEnd = true;
 		if ( firstMoveDepth < 20 )
 		{
-			cout << "Ups. Spielende gefunden. Erstaunlich. Fehler?" << endl;
-			cout << BoardManager::ToString(pos) << endl;
+			//cout << "Ups. Spielende gefunden. Erstaunlich. Fehler?" << endl;
+			//cout << BoardManager::ToString(pos) << endl;
 		}
 		if (color == 1)
 		{

@@ -107,6 +107,8 @@ superPackedMove MoveManager::superPackMove(packedMove PM)
 	MoveManager::UnpackMove(PM, m);
 	superPackedMove ret;
 	ret.isSuperPackedMove = 1;
+	ret.isGameEndNode = 0;
+	ret.totValue = 1;
 	ret.packedMove = m[1] * 128 + m[0];
 	return ret;
 }
