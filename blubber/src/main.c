@@ -12,7 +12,11 @@
 
 int main(int argc, char**argv) {
 #ifndef TEST
-    char * host = "localhost";
+#ifdef _WIN
+	char * host = "127.0.0.1";
+#else
+	char * host = "localhost";
+#endif
     char * port = "13050";
     char * reservation = 0;
     int joinReserved = 0;

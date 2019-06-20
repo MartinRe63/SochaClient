@@ -116,10 +116,10 @@ int g_currentLenght = 0;
 
 char getCharAt(int sockFD, int charID) {
     if (charID >= g_currentLenght) {
-        g_currentLenght += read(sockFD, (char *) g_messageBuffer + g_currentLenght, sizeof (g_messageBuffer) - g_currentLenght);
-        //printf("%s\n%d\n", g_messageBuffer, g_currentLenght);
+        g_currentLenght += recv(sockFD, (char *) g_messageBuffer + g_currentLenght, sizeof (g_messageBuffer) - g_currentLenght, 0);
+        // printf("%s\n%d\n", g_messageBuffer, g_currentLenght);
         g_messageBuffer[g_currentLenght] = 0;
-        //printf("Zeichen Gelesen: %d\n", g_currentLenght);
+        // printf("Zeichen Gelesen: %d\n", g_currentLenght);
     }
     return g_messageBuffer[charID];
 }
@@ -374,7 +374,7 @@ int parseMassage(int sockFD) {
         parseTag(sockFD);
         //printf("Last Tag: %d, %d\n", g_opendTag[g_openTagCount-1], g_openTagCount);
     } while ((g_openTagCount > 1 || g_currentChar < g_currentLenght - 5) && g_openTagCount);
-    //printf("Server Nachricht: %s\n", g_messageBuffer);
+    // printf("Server Nachricht: %s\n", g_messageBuffer);
     return g_openTagCount;
 }
 

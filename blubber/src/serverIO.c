@@ -27,7 +27,12 @@
 
 #define AF_ADDR AF_INET
 
+#ifdef _WIN
+SOCKET g_sockedfd;
+#else
 unsigned int g_sockedfd;
+#endif
+
 char g_room[128];
 //Connect to the Server.
 
@@ -43,7 +48,7 @@ int sIO_connect(char * Port, char * Host) {
 		return 1;
 	}
 #endif
-    g_sockedfd = socket(AF_ADDR, SOCK_STREAM, 0);
+    g_sockedfd = socket(AF_ADDR, SOCK_STREAM, IPPROTO_TCP );
     if (g_sockedfd < 0) {
 		unsigned err = WSAGetLastError();
         printf( "Socket konnte nicht erstellt werden %d\n", err );
@@ -89,7 +94,7 @@ int sIO_connect(char * Port, char * Host) {
 }
 
 int sIO_join() {
-    if (write(g_sockedfd, "<protocol><join gameType=\"swc_2019_piranhas\" />", 47) < 0) {
+    if (send(g_sockedfd, "<protocol><join gameType=\"swc_2019_piranhas\" />", 47, 0) < 0) {
         printf("Fehler beim senden!!!");
         return 0;
     }
@@ -99,7 +104,7 @@ int sIO_join() {
 int sIO_joinReservation(char * reservation) {
     char buffer[1024];
     sprintf(buffer, "<protocol><joinPrepared reservationCode=\"%s\" />", reservation);
-    if (write(g_sockedfd, buffer, strlen(buffer)) < 0) {
+    if (send(g_sockedfd, buffer, strlen(buffer), 0) < 0) {
         printf("Fehler beim senden!!!");
         return 0;
     }
@@ -129,7 +134,7 @@ int sIO_check() {
 int sIO_sendMove(LastMove m) {
     char buffer[1024];
     parseTurn(m, buffer);
-    if (write(g_sockedfd, buffer, strlen(buffer)) < 0) {
+    if (send(g_sockedfd, buffer, strlen(buffer), 0) < 0) {
         printf("Fehler beim senden");
         return 0;
     }
