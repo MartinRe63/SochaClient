@@ -7,8 +7,9 @@
 #include "board.h"
 #include "masc.h"
 #include "types.h"
-#define RATE_SIMPLE
-//#define RATE_2
+
+//#define RATE_SIMPLE
+#define RATE_2
 //#define RATE_1
 
 /*
