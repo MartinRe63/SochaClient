@@ -271,3 +271,8 @@ long BoardManager::GetPosValue(board pos, int color, boardpane blockList[][16], 
 	}
 	return posValue;
 }
+
+void BoardManager::SetBoardValue(board b, int x, int y, int color)
+{
+	BitManager::SetBit(b[color], x + y * 10);
+}

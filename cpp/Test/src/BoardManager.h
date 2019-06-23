@@ -13,11 +13,7 @@
 #include <intrin.h>
 #include <crtdbg.h>
 #include "BitManager.h"
-
-
-typedef uint64_t boardpane[2];
-typedef boardpane board[3];
-
+#include "SuperPackedMove.h"
 
 class GameEndException
 {
@@ -44,9 +40,9 @@ public:
 
 	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth);
 	static std::string AnalysisToString(double val);
+	static void SetBoardValue(board b, int x, int y, int color);
 private:
 	static long GetPosValue(board pos, int color, boardpane blockList[][16], int blockCnt[]);
-
 };
 
 

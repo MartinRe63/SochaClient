@@ -10,6 +10,7 @@
 #include "BoardManager.h"
 #include "SuperPackedMove.h"
 
+
 typedef unsigned packedMove;
 typedef int coordinates;
 typedef coordinates mov[2];
@@ -41,6 +42,9 @@ public:
 	static int getMoveList(board positionData, int color, packedMove moves[]);
     static void addMoveToBoard( board positionData, int color, packedMove move);
 	
+	static int FishCountInDirection(coordinates c, int dir, board positionData);
+	static packedMove LastMove2packedMove(LastMove LM, board positionData);
+	static LastMove PackedMove2LastMove(packedMove pM);
 };
 
 #endif /* MOVEMANAGER_H_ */

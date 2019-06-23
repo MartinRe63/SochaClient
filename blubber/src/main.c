@@ -22,14 +22,15 @@ int main(int argc, char**argv) {
     int joinReserved = 0;
     // Parse Arguments
     for (int i = 1; i < argc; i++) {
-        if (!strcmp("-h", argv[i]) || !strcmp("--host", argv[i])) {
-            i++;
-            assert(i < argc);
-            //free(host);
-            host = 0;
-            host = malloc(sizeof (char) * strlen(argv[i]) + 1);
-            strcpy(host, argv[i]);
-        } else if (!strcmp("-p", argv[i]) || !strcmp("--port", argv[i])) {
+        //if (!strcmp("-h", argv[i]) || !strcmp("--host", argv[i])) {
+        //    i++;
+        //    assert(i < argc);
+        //    //free(host);
+        //    host = 0;
+        //    host = malloc(sizeof (char) * strlen(argv[i]) + 1);
+        //    strcpy(host, argv[i]);
+        //} else 
+		if (!strcmp("-p", argv[i]) || !strcmp("--port", argv[i])) {
             i++;
             assert(i < argc);
             //free(port);

@@ -6,9 +6,21 @@
  */
 
 #include <string.h>
+#include <assert.h>
 #include "BitManager.h"
 #include "MoveManager.h"
 #include "MaskManager.h"
+
+static mov dirVectors[] = {
+	{1, 0},
+	{1, 1},
+	{0, 1},
+	{-1, 1},
+	{-1, 0},
+	{-1, -1},
+	{0, -1},
+	{1, -1}
+};
 
 unsigned MoveManager::getMove(int color, board SourceBoard, board DestinationBoard)
 {
@@ -185,6 +197,48 @@ coordinates MoveManager::movePossible(int x, int y, int dir, int lth, board posi
 
 static long long dbg_cnt = 0;
 
+int MoveManager::FishCountInDirection(coordinates p, int dir, board positionData)
+{
+	int moveLth =
+		BitManager::BitCount(MaskManager::directionMasks[dir][p][0] & positionData[0][0]) +
+		BitManager::BitCount(MaskManager::directionMasks[dir][p][1] & positionData[0][1]) +
+		BitManager::BitCount(MaskManager::directionMasks[dir][p][0] & positionData[1][0]) +
+		BitManager::BitCount(MaskManager::directionMasks[dir][p][1] & positionData[1][1]);
+	return moveLth;
+}
+packedMove MoveManager::LastMove2packedMove(LastMove LM, board positionData)
+{
+	int fishCnt = FishCountInDirection(LM.x + LM.y * 10, LM.dir, positionData);
+	int x = LM.x + dirVectors[LM.dir][0] * fishCnt;
+	int y = LM.y + dirVectors[LM.dir][1] * fishCnt;
+	coordinates goal = x+y*10;
+	return MoveManager::PackMove(LM.x + LM.y * 10, goal);
+}
+LastMove MoveManager::PackedMove2LastMove(packedMove pM)
+{
+	mov m;
+	MoveManager::UnpackMove(pM, m);
+	int x = m[0] % 10;
+	int y = m[0] / 10;
+	int dx = m[1] % 10 - x;
+	int dy = m[1] / 10 - y;
+	assert(abs(dx) == abs(dy) || dy == 0 || dx == 0);
+	dx /= abs(dx) ? abs(dx) : 1;
+	dy /= abs(dy) ? abs(dy) : 1;
+	for (int d = 0; d < 8; d++) {
+		if (dx == dirVectors[d][0] && dy == dirVectors[d][1]) {
+			LastMove r;
+			r.dir = d;
+			r.x = x;
+			r.y = y;
+			// printf("Turn x: %d, y: %d, direction: %d, xt: %d, yt: %d\n", r.x, r.y, r.dir, t.target % 10, t.target / 10);
+			return r;
+		}
+	}
+	assert(0);
+	LastMove l = { 0 };
+	return l;
+}
 int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 {
 	int moveCnt = 0;
@@ -217,6 +271,8 @@ int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 	return moveCnt;
 }
 
+long long i = 0;
+
 void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
 {
 	mov move;
@@ -226,6 +282,11 @@ void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
 	int moveFrom = move[0];
 	int moveTo = move[1];
 
+	i++;
+
+	assert(BitManager::IsBit(positionData[color], moveFrom));
+	assert(!BitManager::IsBit(positionData[color], moveTo));
+	assert(!BitManager::IsBit(positionData[2], moveTo));
 	_ASSERT_EXPR( BitManager::IsBit(positionData[color], moveFrom), "unknown software issue - fish to move is not at the position to move from.");
 	_ASSERT_EXPR( ! BitManager::IsBit(positionData[color], moveTo ), "unknown software issue - at the moveto position is a fish of the same color.");
 	_ASSERT_EXPR( ! BitManager::IsBit(positionData[2], moveTo ), "unknown software issue - at the moveto position is a crake.");

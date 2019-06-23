@@ -38,9 +38,12 @@ class NodeManager
 public:
 	NodeManager( int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth, double DeepFactor);
 	~NodeManager();
+	void ReInit(int MyColor, board FirstBoard, int FirstMoveDepth);
 	void SelectAction(bool oneCycle);
 	smallNode * findNode(int nodeIdx, packedMove move);
-	void DisposeTree(packedMove move1, packedMove move2);
+	void DisposeTree();
+	void ImplementMoveToTree(packedMove move);
+	bool IsDisposeRequired();
 	packedMove BestMove();
 	std::string ValuesToString();
 
@@ -66,6 +69,7 @@ private:
 	int firstMoveColor;
 	int firstMoveDepth;
 	smallNode firstNodeIdx;
+	smallNode previousNodeIdx;
 	boardpane* firstBoard;
 	FreeArrayManager* fam;
 	IntListManager* ilm;
@@ -78,4 +82,5 @@ private:
 	board pos;
 	int maxDepth;
 	double deepFactor;
+
 };

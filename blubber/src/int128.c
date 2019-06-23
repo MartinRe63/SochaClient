@@ -62,13 +62,13 @@ int int128_ffs(int128 value){
 	{
 		res = _BitScanForward64(&ret, value.v1);
 		if (res == 0)
-			ret = 128;
+			return 0;
 		else
 			ret += 64;
-		return ret;
+		return ret+1;
 	}
 #endif
-    return 0;
+    return ret+1;
 }
 int int128_getBit(int128 value, int id){
     if(id < 64){

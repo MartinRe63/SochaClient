@@ -12,13 +12,16 @@
 #include <chrono>
 
 #include <stdlib.h>
-
+#include <assert.h>
 
 #include "MaskManager.h"
 #include "BitManager.h"
 #include "NodeManager.h"
 #include "FreeArrayManager.h"
 #include "IntListManager.h"
+#include "serverIO.h"
+#include "logic.h"
+
 
 using namespace std;
 using namespace std::chrono;
@@ -151,7 +154,7 @@ void testFreeArrayManager()
 	}
 }
 
-void testGaming(board Pos)
+void TestGaming(board Pos)
 {
 	ElapsedTimer* t = new ElapsedTimer();
 
@@ -172,7 +175,12 @@ void testGaming(board Pos)
 			if (redNM == NULL)
 				redNM = new NodeManager(40000000, 0, Pos, 0, 0.1);
 			else
-				redNM->DisposeTree(redMove, blueMove);
+			{
+				redNM->ImplementMoveToTree(redMove);
+				redNM->ImplementMoveToTree(blueMove);
+				redNM->DisposeTree();
+			}
+				
 
 			expands = 0;
 			for (int k = 0; k < 200000; k++)
@@ -204,7 +212,11 @@ void testGaming(board Pos)
 			if (blueNM == NULL)
 				blueNM = new NodeManager(40000000, 1, Pos, 1, 1);
 			else
-				blueNM->DisposeTree(blueMove, redMove);
+			{
+				blueNM->ImplementMoveToTree(blueMove);
+				blueNM->ImplementMoveToTree(redMove);
+				blueNM->DisposeTree();
+			}
 			expands = 0;
 			for (int k = 0; k < 200000; k++)
 			{
@@ -254,11 +266,70 @@ void testGaming(board Pos)
 	cin >> i;
 }
 
-int main() {
+void RealGame(int argc, char**argv)
+{
+	char * host = "127.0.0.1";
+
+	char * port = "13050";
+	char * reservation = 0;
+	int joinReserved = 0;
+	logic_init();
+	// Parse Arguments
+	for (int i = 1; i < argc; i++) {
+		//if (!strcmp("-h", argv[i]) || !strcmp("--host", argv[i])) {
+		//    i++;
+		//    assert(i < argc);
+		//    //free(host);
+		//    host = 0;
+		//    host = malloc(sizeof (char) * strlen(argv[i]) + 1);
+		//    strcpy(host, argv[i]);
+		//} else 
+		if (!strcmp("-p", argv[i]) || !strcmp("--port", argv[i])) {
+			i++;
+			assert(i < argc);
+			//free(port);
+			port = 0;
+			port = (char *)malloc(sizeof(char) * strlen(argv[i]) + 1);
+			strcpy(port, argv[i]);
+		}
+		else if (!strcmp("-r", argv[i]) || !strcmp("--reservation", argv[i])) {
+			joinReserved = 1;
+			i++;
+			assert(i < argc);
+			/*if (reservation != 0)
+				free(reservation);*/
+			reservation = 0;
+			reservation = (char*)malloc(sizeof(char) * strlen(argv[i]) + 1);
+			strcpy(reservation, argv[i]);
+		}
+	}
+	if (!sIO_connect(port, host)) {
+		exit(-1);
+	}
+	if (joinReserved) {
+		sIO_joinReservation(reservation);
+	}
+	else {
+		sIO_join();
+	}
+	while (!logic_isInitialized() && sIO_check()) {
+	}
+	printf("Los Gehts!\n");
+	while (sIO_check()) {
+		logic_update();
+	}
+	printf("Schon vorbei :(\n");
+	sIO_close();
+
+}
+
+int main(int argc, char**argv) {
 	srand( 234567891 );
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
+
 	MaskManager::initMasks();
+	
 	// testFreeArrayManager();
 	// testListManager();
 	board b;
@@ -273,7 +344,7 @@ int main() {
 		"0........0" \
 		".11111111." ), b);
 	
-	testGaming( b );
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	// TestGaming( b );
+	RealGame(argc, argv);
 	return 0;
 }

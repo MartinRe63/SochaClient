@@ -38,6 +38,13 @@ NodeManager::~NodeManager()
 {
 }
 
+void NodeManager::ReInit(int MyColor, board FirstBoard, int FirstMoveDepth)
+{
+	firstMoveColor = MyColor;
+	firstBoard = FirstBoard;
+	firstMoveDepth = FirstMoveDepth;
+}
+
 bool NodeManager::hasChild( smallNode sN )
 {
 	if (sN.sPM.isSuperPackedMove == 1)
@@ -51,6 +58,8 @@ void NodeManager::InitFirstNode()
 	firstNodeIdx.sPM.packedMove = 0;
 	firstNodeIdx.sPM.isGameEndNode = 0;
 	firstNodeIdx.sPM.totValue = 1;
+	previousNodeIdx.node.idx = firstNodeIdx.node.idx;
+	previousNodeIdx.node.isNoIdx = firstNodeIdx.node.isNoIdx;
 	// fam->ReserveNextFree();
 	// InitNode(firstNodeIdx, 0, 1);
 }
@@ -77,6 +86,14 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	InitNode(nodeId, MoveManager::superPack2packMove(SN->sPM), depth < 60 ? 1 : maxVisits);
 	SN->node.isNoIdx = 0;
 	SN->node.idx = nodeId;
+
+	// better to have a copy methode
+	if (SN == &firstNodeIdx)
+	{
+		previousNodeIdx.node.idx = firstNodeIdx.node.idx;
+		previousNodeIdx.node.isNoIdx = firstNodeIdx.node.isNoIdx;
+	}
+
 	_ASSERT_EXPR( memory[nodeId].node.childs.id == nullChildId, "Software Issue - Childs available.");
 
 	//
@@ -292,20 +309,23 @@ smallNode* NodeManager::findNode(int nodeIdx, packedMove move)
 	return NULL;
 }
 
-void NodeManager::DisposeTree(packedMove move1, packedMove move2)
+void NodeManager::DisposeTree()
 {
-	smallNode* node = findNode(firstNodeIdx.node.idx, move1);
-	_ASSERT_EXPR(node != NULL, "The first move must be a child of the first Node.");
+	// smallNode* node = findNode(firstNodeIdx.node.idx, move1);
+	// _ASSERT_EXPR(node != NULL, "The first move must be a child of the first Node.");
 	// movePosition(nodeId, fishMove, pos, firstMoveColor );
 
-	node = findNode(node->node.idx, move2);
-	// if ( nodeId >= 0 )
-	// movePosition(nodeId, fishMove, pos, (firstMoveColor+1)%2 );
-	if (node->sPM.isSuperPackedMove == 0)
-		releaseNode(firstNodeIdx, node->node.idx);
-	else
-		releaseNode(firstNodeIdx, -1);
-	firstNodeIdx = *node;
+	// node = findNode(node->node.idx, move2);
+	
+	if (previousNodeIdx.node.idx != firstNodeIdx.node.idx || previousNodeIdx.node.isNoIdx != firstNodeIdx.node.isNoIdx )
+		// movePosition(nodeId, fishMove, pos, (firstMoveColor+1)%2 );
+	{
+		if (previousNodeIdx.sPM.isSuperPackedMove == 0)
+			releaseNode(previousNodeIdx, firstNodeIdx.node.idx);
+		else
+			releaseNode(previousNodeIdx, -1);
+	}
+	previousNodeIdx.node.idx = firstNodeIdx.node.idx;
 	// if (firstNode < 0)
 	//{
 	//	InitFirstNode();
@@ -313,7 +333,23 @@ void NodeManager::DisposeTree(packedMove move1, packedMove move2)
 	firstMoveDepth += 2;
 }
 
+void NodeManager::ImplementMoveToTree(packedMove move)
+{
+	smallNode* node = findNode(firstNodeIdx.node.idx, move);
+	if (node->sPM.isSuperPackedMove)
+	{
+		firstNodeIdx.sPM = node->sPM;
+	}
+	else
+	{
+		firstNodeIdx.node = node->node;
+	}
+}
 
+bool NodeManager::IsDisposeRequired()
+{
+	return (previousNodeIdx.node.isNoIdx != firstNodeIdx.node.isNoIdx || previousNodeIdx.node.idx != firstNodeIdx.node.idx );
+}
 
 
 packedMove NodeManager::BestMove()
