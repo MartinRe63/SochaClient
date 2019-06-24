@@ -167,96 +167,109 @@ void TestGaming(board Pos)
 
 	long expands = 0;
 	long long totalExpands = 0;
-	try
+	bool gameEnd = false;
+	double result = 0;
+
+	while ( ! gameEnd )
 	{
-		while (true)
+		t->reset();
+		if (redNM == NULL)
+			redNM = new NodeManager(40000000, 0, Pos, 0, 0.1);
+		else
 		{
-			t->reset();
-			if (redNM == NULL)
-				redNM = new NodeManager(40000000, 0, Pos, 0, 0.1);
-			else
-			{
-				redNM->ImplementMoveToTree(redMove);
-				redNM->ImplementMoveToTree(blueMove);
-				redNM->DisposeTree();
-			}
-				
-
-			expands = 0;
-			for (int k = 0; k < 200000; k++)
-			{
-				redNM->SelectAction( true );
-				// System.out.println( nm.LastPositionToString() );
-				expands++;
-				if ( ( k % 100 ) == 99 )
-				{
-					int e = t->elapsed();
-					if ( e > 1950 )
-						k = INT_MAX-1;
-				}
-			}
-			ms += t->elapsed();
-
-			totalExpands += expands;
-			moveCnt++;
-			MoveManager::addMoveToBoard(Pos, 0, (redMove = redNM->BestMove()));
-			cout << (std::to_string(moveCnt) + "."
-					+ MoveManager::packMoveToString(redMove)
-					+ " Depth:" + std::to_string(redNM->GetMaxDepth())
-					+ " Expands:" + std::to_string( expands ) ) << endl;
-			cout << redNM->ValuesToString() << endl;
-			cout << BoardManager::ToString(Pos) << endl;
-			redNM->ResetMaxDepth();
-			t->reset();
-
-			if (blueNM == NULL)
-				blueNM = new NodeManager(40000000, 1, Pos, 1, 1);
-			else
-			{
-				blueNM->ImplementMoveToTree(blueMove);
-				blueNM->ImplementMoveToTree(redMove);
-				blueNM->DisposeTree();
-			}
-			expands = 0;
-			for (int k = 0; k < 200000; k++)
-			{
-				blueNM->SelectAction(true);
-				// System.out.println( nm.LastPositionToString() );
-				expands++;
-				if ( ( k % 100 ) == 99 )
-				{
-					int e = t->elapsed();
-					if ( e > 1950 )
-						k = INT_MAX-1;
-				}
-			}
-			ms += t->elapsed();
-
-			totalExpands += expands;
-			moveCnt++;
-			MoveManager::addMoveToBoard(Pos, 1, (blueMove = blueNM->BestMove()));
-			cout << (std::to_string(moveCnt) + "."
-					+ MoveManager::packMoveToString(blueMove)
-					+ " Depth:" + std::to_string(blueNM->GetMaxDepth())
-					+ " Expands:" + std::to_string( expands ) ) << endl;
-			cout << blueNM->ValuesToString() << endl;
-			cout << BoardManager::ToString(Pos) << endl;
-			blueNM->ResetMaxDepth();
-			t->reset();
-
-			boardpane blockList[2][16]; // all blocks of a board
-			int blockCnt[2]; // blocklist for red and blue
-			BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0);
-
-			/* Total memory currently in use by the JVM */
-			// System.out.println("Total memory (bytes): " +  Runtime.getRuntime().totalMemory() );
+			redNM->DisposeTree();
 		}
 
 
+		expands = 0;
+		for (int k = 0; k < 200000; k++)
+		{
+			redNM->SelectAction( true );
+			// System.out.println( nm.LastPositionToString() );
+			expands++;
+			if ( ( k % 100 ) == 99 )
+			{
+				int e = t->elapsed();
+				if ( e > 1950 )
+					k = INT_MAX-1;
+			}
+		}
+
+		ms += t->elapsed();
+
+		totalExpands += expands;
+		moveCnt++;
+		MoveManager::addMoveToBoard(Pos, 0, (redMove = redNM->BestMove()));
+
+		redNM->ImplementMoveToTree(redMove);
+		if ( blueNM )
+			blueNM->ImplementMoveToTree(redMove);
+
+		cout << (std::to_string(moveCnt) + "."
+				+ MoveManager::packMoveToString(redMove)
+				+ " Depth:" + std::to_string(redNM->GetMaxDepth())
+				+ " Expands:" + std::to_string( expands ) ) << endl;
+		cout << redNM->ValuesToString() << endl;
+		cout << BoardManager::ToString(Pos) << endl;
+
+		redNM->ResetMaxDepth();
+		t->reset();
+
+		if (blueNM == NULL)
+			blueNM = new NodeManager(40000000, 1, Pos, 1, 1);
+		else
+		{
+			blueNM->DisposeTree();
+		}
+		expands = 0;
+		for (int k = 0; k < 200000; k++)
+		{
+			blueNM->SelectAction(true);
+
+			// simulate ponder for red
+			if ( k < 20000 )
+				redNM->SelectAction(true);
+
+			// System.out.println( nm.LastPositionToString() );
+			expands++;
+			if ( ( k % 100 ) == 99 )
+			{
+				int e = t->elapsed();
+				if ( e > 2950 )
+					k = INT_MAX-1;
+			}
+		}
+		ms += t->elapsed();
+
+		totalExpands += expands;
+		moveCnt++;
+		MoveManager::addMoveToBoard(Pos, 1, (blueMove = blueNM->BestMove()));
+
+		redNM->ImplementMoveToTree(blueMove);
+		blueNM->ImplementMoveToTree(blueMove);
+
+		cout << (std::to_string(moveCnt) + "."
+				+ MoveManager::packMoveToString(blueMove)
+				+ " Depth:" + std::to_string(blueNM->GetMaxDepth())
+				+ " Expands:" + std::to_string( expands ) ) << endl;
+		cout << blueNM->ValuesToString() << endl;
+		cout << BoardManager::ToString(Pos) << endl;
+
+		blueNM->ResetMaxDepth();
+		t->reset();
+
+		boardpane blockList[2][16]; // all blocks of a board
+		int blockCnt[2]; // blocklist for red and blue
+		result = BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0, gameEnd );
+
+		/* Total memory currently in use by the JVM */
+		// System.out.println("Total memory (bytes): " +  Runtime.getRuntime().totalMemory() );
 	}
-	catch (GameEndException& e)
+
+
+	if ( gameEnd )
 	{
-		if (e.GetResult() == 1.0)
+		if (result == 1.0)
 			cout << "Blau hat gewonnen." << endl;
 		else
 			cout << "Rot hat gewonnen." << endl;
@@ -344,7 +357,7 @@ int main(int argc, char**argv) {
 		"0........0" \
 		".11111111." ), b);
 	
-	// TestGaming( b );
-	RealGame(argc, argv);
+	TestGaming( b );
+	// RealGame(argc, argv);
 	return 0;
 }

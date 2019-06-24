@@ -59,15 +59,17 @@ private:
 	void releaseNode(smallNode NodeId, int NodeIdToExclude);
 
 	void expandNode(smallNode* sN , int moveColor, board position, int depth);
-	double rollOut( int color, board pos, int depth );
+	double rollOut( int color, board pos, int depth, bool& gameEnd );
 
 	smallNode * selectMove(smallNode * sN);
 
 	void updateStat( int nodeId, double value );
+	void CopyNode( smallNode& from, smallNode& to);
 	
 	m* memory;
 	int firstMoveColor;
 	int firstMoveDepth;
+	int currentMoveColor;
 	smallNode firstNodeIdx;
 	smallNode previousNodeIdx;
 	boardpane* firstBoard;

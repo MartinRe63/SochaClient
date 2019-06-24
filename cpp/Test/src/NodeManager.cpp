@@ -28,8 +28,10 @@ NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int First
 	firstBoard = FirstBoard;
 	
 	firstMoveColor = MyColor;
+	currentMoveColor = MyColor;
 	firstMoveDepth = FirstMoveDepth;
 	InitFirstNode();
+	CopyNode(firstNodeIdx, previousNodeIdx);
 	deepFactor = DeepFactor;
 }
 
@@ -58,8 +60,6 @@ void NodeManager::InitFirstNode()
 	firstNodeIdx.sPM.packedMove = 0;
 	firstNodeIdx.sPM.isGameEndNode = 0;
 	firstNodeIdx.sPM.totValue = 1;
-	previousNodeIdx.node.idx = firstNodeIdx.node.idx;
-	previousNodeIdx.node.isNoIdx = firstNodeIdx.node.isNoIdx;
 	// fam->ReserveNextFree();
 	// InitNode(firstNodeIdx, 0, 1);
 }
@@ -88,7 +88,7 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	SN->node.idx = nodeId;
 
 	// better to have a copy methode
-	if (SN == &firstNodeIdx)
+	if (SN == &firstNodeIdx && previousNodeIdx.sPM.isSuperPackedMove)
 	{
 		previousNodeIdx.node.idx = firstNodeIdx.node.idx;
 		previousNodeIdx.node.isNoIdx = firstNodeIdx.node.isNoIdx;
@@ -109,19 +109,12 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	}
 }
 
-double NodeManager::rollOut( int color, board pos, int depth )
+double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd )
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
 	// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
-	try
-	{
-		return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth);
-	}
-	catch (GameEndException& e)
-	{
-		throw e;
-	}
+	return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth, gameEnd );
 }
 
 smallNode* NodeManager::selectMove(smallNode* sN) 
@@ -190,7 +183,7 @@ void NodeManager::SelectAction(bool oneCycle)
 		visitedCnt = 0;
 		smallNode* cur = &firstNodeIdx;
 		visited[visitedCnt++] = cur;
-		int nextMoveColor = firstMoveColor;
+		int nextMoveColor = currentMoveColor;
 		BoardManager::Copy(firstBoard, pos);
 
 		while ( cur->sPM.isSuperPackedMove != 1 ) // ! isLeaf
@@ -229,16 +222,13 @@ void NodeManager::SelectAction(bool oneCycle)
 		nextMoveColor = (nextMoveColor + 1) % 2;  // switch also the color back
 
 		double value = 0;
-
+        double result = 0;
+        bool gameEnd;
 		if ( cur->sPM.isGameEndNode == 0 )
 		{
-			try
+			value = rollOut( nextMoveColor, pos, visitedCnt, gameEnd );
+			if ( gameEnd )
 			{
-			 	value = rollOut( nextMoveColor, pos, visitedCnt );
-			}
-			catch ( GameEndException& e )
-			{
-				value = e.GetResult();
 				cur->sPM.isGameEndNode = 1;
 				cur->sPM.totValue = (unsigned)value*2;
 			}
@@ -249,6 +239,7 @@ void NodeManager::SelectAction(bool oneCycle)
 		}
 		// int visitedMoveColor = nextMoveColor;
 		maxDepth = (visitedCnt > maxDepth) ? visitedCnt : maxDepth;
+
 		for (int k = visitedCnt; k >= 0; k--)                  // for (TreeNode node : visited) 
 		{
 			// System.out.println(node);
@@ -325,24 +316,38 @@ void NodeManager::DisposeTree()
 		else
 			releaseNode(previousNodeIdx, -1);
 	}
-	previousNodeIdx.node.idx = firstNodeIdx.node.idx;
+	previousNodeIdx.node = firstNodeIdx.node;
 	// if (firstNode < 0)
 	//{
 	//	InitFirstNode();
 	//}
-	firstMoveDepth += 2;
 }
 
 void NodeManager::ImplementMoveToTree(packedMove move)
 {
 	smallNode* node = findNode(firstNodeIdx.node.idx, move);
-	if (node->sPM.isSuperPackedMove)
+	if ( node )
 	{
-		firstNodeIdx.sPM = node->sPM;
+		CopyNode( *node, firstNodeIdx );
 	}
 	else
 	{
-		firstNodeIdx.node = node->node;
+		// previous will stay until it's all released
+		this->InitFirstNode();
+	}
+	firstMoveDepth += 1;
+	currentMoveColor = ! currentMoveColor;
+}
+
+void NodeManager::CopyNode( smallNode& from, smallNode& to)
+{
+	if ( from.sPM.isSuperPackedMove )
+	{
+		to.sPM = from.sPM;
+	}
+	else
+	{
+		to.node = from.node;
 	}
 }
 
@@ -411,7 +416,6 @@ std::string NodeManager::ValuesToString()
 	}
 	l.sort([](const node & first, const node & second)
 	{
-		unsigned int i = 0;
 		double firstVal = 0.5;
 		double secondVal = 0.5;
 		firstVal = first.totValue / first.v.visits;

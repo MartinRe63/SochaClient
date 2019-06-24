@@ -33,7 +33,7 @@ int FreeArrayManager::ReserveNextFree()
 	if (ret >= maxFreeId || ! HasFreeItemsAvailable())
 	{
 		// cout << "test" << endl; // (std::to_string("Itemsize:") + std::to_string(itemSize) + " no more element available.") << endl;
-		throw std::exception( "No elements available. ItemSize:" + itemSize ); // this should force an out of bound exception, if the result -1 is not checked.
+		throw std::exception(); // this should force an out of bound exception, if the result -1 is not checked.
 	}
 	nextFreeId* item = GetItem(firstFreeId);  // GetItem(firstFreeId);
 	_ASSERT_EXPR ( item->isFree, "Unknown Software Issue - firstFreeId is not a free item.");

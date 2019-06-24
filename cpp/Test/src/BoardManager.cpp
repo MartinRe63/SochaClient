@@ -213,7 +213,7 @@ double BoardManager::Analysis(int moveCnt, boardpane blockListAll[][16], int blo
 static const double factor = 0.3 / (512 * 16);
 static long long dbg_cnt = 0;
 
-double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth)
+double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd)
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
@@ -224,6 +224,7 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	//	dbg_cnt--;
 	//}
 	
+	gameEnd = false;
 	long valColor = GetPosValue(pos, color, blockList, blockCnt);
 	long valOppositeColor = GetPosValue(pos, (color + 1) % 2, blockList, blockCnt);
 	double ret;
@@ -240,11 +241,12 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 			//cout << "Ups. Spielende gefunden. Erstaunlich. Fehler?" << endl;
 			//cout << BoardManager::ToString(pos) << endl;
 		}
+		// !!! The result of the analysis is from the red view point !!!
 		if (color == 1)
 		{
 			ret = 1 - ret;
 		}
-		throw GameEndException(ret);
+		gameEnd = true;
 	}
 	return ret;
 }

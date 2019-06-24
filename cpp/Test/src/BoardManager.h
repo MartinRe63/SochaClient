@@ -38,7 +38,7 @@ public:
 
 	static double Analysis(int moveCnt, boardpane blockListAll[][16], int blockCount[], board pos, int FirstDepth);
 
-	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth);
+	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd);
 	static std::string AnalysisToString(double val);
 	static void SetBoardValue(board b, int x, int y, int color);
 private:
