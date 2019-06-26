@@ -208,7 +208,7 @@ int MoveManager::FishCountInDirection(coordinates p, int dir, board positionData
 }
 packedMove MoveManager::LastMove2packedMove(LastMove LM, board positionData)
 {
-	int fishCnt = FishCountInDirection(LM.x + LM.y * 10, LM.dir, positionData);
+	int fishCnt = FishCountInDirection(LM.x + LM.y * 10, LM.dir % 4, positionData);
 	int x = LM.x + dirVectors[LM.dir][0] * fishCnt;
 	int y = LM.y + dirVectors[LM.dir][1] * fishCnt;
 	coordinates goal = x+y*10;

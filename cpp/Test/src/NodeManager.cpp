@@ -28,7 +28,7 @@ NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int First
 	firstBoard = FirstBoard;
 	
 	firstMoveColor = MyColor;
-	currentMoveColor = MyColor;
+	currentMoveColor = 0;  // assumption is: red will start
 	firstMoveDepth = FirstMoveDepth;
 	InitFirstNode();
 	CopyNode(firstNodeIdx, previousNodeIdx);
@@ -107,6 +107,7 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 		sN.sPM = MoveManager::superPackMove(moveList[i]);
 		wIt->AddItem(sN); // children[i] = new TreeNode();
 	}
+	delete wIt;
 }
 
 double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd )
@@ -161,6 +162,7 @@ smallNode* NodeManager::selectMove(smallNode* sN)
 		}
 		iSN = i->GetNextItem();
 	}
+	delete i;
 	// System.out.println("Returning: " + selected);
 	_ASSERT_EXPR( selectedNode != 0, "Child not found." );
 	return selectedNode;
@@ -229,6 +231,7 @@ void NodeManager::SelectAction(bool oneCycle)
 			value = rollOut( nextMoveColor, pos, visitedCnt, gameEnd );
 			if ( gameEnd )
 			{
+				std::string s = BoardManager::ToString(pos);
 				cur->sPM.isGameEndNode = 1;
 				cur->sPM.totValue = (unsigned)value*2;
 			}
@@ -273,6 +276,7 @@ void NodeManager::releaseNode(smallNode NodeId, int NodeIdToExclude)
 				releaseNode(*sN, NodeIdToExclude);
 				sN = ri->GetNextItem();
 			}
+			delete ri;
 			ilm->Release(ListIdx);
 			fam->DisposeAt(nodeIdx);
 		}
@@ -297,6 +301,7 @@ smallNode* NodeManager::findNode(int nodeIdx, packedMove move)
 		}
 		sN = ri->GetNextItem();
 	}
+	delete ri;
 	return NULL;
 }
 
@@ -388,7 +393,7 @@ packedMove NodeManager::BestMove()
 		}
 		sN = ri->GetNextItem();
 	}
-
+	delete ri;
 	return bestMove;
 }
 
@@ -414,6 +419,7 @@ std::string NodeManager::ValuesToString()
 			l.push_back(memory[sN->node.idx].node);
 		sN = ri->GetNextItem();
 	}
+	delete ri;
 	l.sort([](const node & first, const node & second)
 	{
 		double firstVal = 0.5;

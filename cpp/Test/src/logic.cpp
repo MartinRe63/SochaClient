@@ -1,7 +1,10 @@
+#include <iostream>
 #include <string.h>
-#include <stdio.h>
-#include "serverIO.h"
+// #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
+
+#include "serverIO.h"
 
 // #include "types.h"
 // #include "int128.h"
@@ -12,6 +15,8 @@
 #include "SuperPackedMove.h"
 #include "NodeManager.h"
 #include "BoardManager.h"
+
+using namespace std;
 
 board g_currentBoard;
 int g_turnCount = 0;
@@ -39,7 +44,7 @@ int logic_isInitialized(){
 }
 void logic_setMoveRequestFlag() {
     g_moveRequest = 1;
-	g_myTurnTime = clock() + CLOCKS_PER_SEC; // +(CLOCKS_PER_SEC * 7) / 8;
+	g_myTurnTime = clock() + CLOCKS_PER_SEC; + (CLOCKS_PER_SEC * 7) / 8;
 }
 void logic_setState(State state){
     if(state.turn == 0)
@@ -84,11 +89,22 @@ void logic_update() {
         //board_debug = 0;
         //test = test + 1;
         //printf("\n");
+
+
         
 		packedMove m = nodeManager->BestMove();
-		nodeManager->ImplementMoveToTree(m);
 
         sIO_sendMove(MoveManager::PackedMove2LastMove(m));
+		MoveManager::addMoveToBoard(g_currentBoard, g_myColor, m);
+
+		cout << (std::to_string(g_turnCount) + "."
+			+ MoveManager::packMoveToString(m)
+			+ " Depth:" + std::to_string(nodeManager->GetMaxDepth())
+			+ " Expands:" + std::to_string(expandCount)) << endl;
+		cout << nodeManager->ValuesToString() << endl;
+		cout << BoardManager::ToString(g_currentBoard) << endl;
+
+		nodeManager->ImplementMoveToTree(m);
 		nodeManager->DisposeTree();
 
         //board_printCurrentState(g_currentBoard);
@@ -98,9 +114,9 @@ void logic_update() {
         //To Prevent Certain Bugs do one Expand instantly
     }
     else if ( g_initialized ) {
-   //     for(int i = 0; i < 100; i++){
-			//nodeManager->SelectAction(true);
-   //     }
+        for(int i = 0; i < 100; i++){
+			nodeManager->SelectAction(true);
+        }
     }
 }
 

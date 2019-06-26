@@ -210,7 +210,7 @@ double BoardManager::Analysis(int moveCnt, boardpane blockListAll[][16], int blo
 	return -1;
 }
 
-static const double factor = 0.3 / (512 * 16);
+static const double factor = 0.6 / (512 * 16);
 static long long dbg_cnt = 0;
 
 double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd)
@@ -218,7 +218,7 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
 	// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
-	dbg_cnt++;
+	// dbg_cnt++;
 	//if (dbg_cnt == 12715)
 	//{
 	//	dbg_cnt--;
@@ -226,14 +226,12 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	
 	gameEnd = false;
 	long valColor = GetPosValue(pos, color, blockList, blockCnt);
-	long valOppositeColor = GetPosValue(pos, (color + 1) % 2, blockList, blockCnt);
-	double ret;
+	int oppositeColor = !color;
+	long valOppositeColor = GetPosValue(pos, oppositeColor, blockList, blockCnt);
+	double ret = (valColor / blockCnt[color] - valOppositeColor / blockCnt[oppositeColor]) * factor + 0.5;
+	double res;
 	// foundGameEnd = false;
-	if ((ret = BoardManager::Analysis(depth, blockList, blockCnt, pos, firstMoveDepth)) < 0)
-	{
-		ret = (valColor - valOppositeColor) * factor + 0.5;
-	}
-	else
+	if ((res = BoardManager::Analysis(depth, blockList, blockCnt, pos, firstMoveDepth)) >= 0)
 	{
 		// foundGameEnd = true;
 		if ( firstMoveDepth < 20 )
@@ -242,10 +240,15 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 			//cout << BoardManager::ToString(pos) << endl;
 		}
 		// !!! The result of the analysis is from the red view point !!!
+
 		if (color == 1)
 		{
-			ret = 1 - ret;
+			res = 1 - res;
 		}
+		// if (std::abs(res - ret) >= 0.6)
+		// 	 dbg_cnt++;
+		ret = res;
+
 		gameEnd = true;
 	}
 	return ret;

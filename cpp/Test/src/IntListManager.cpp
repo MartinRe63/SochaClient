@@ -29,11 +29,6 @@ void IntListManager::Add(int ListIdx, int BlockIdx, int RelativeIdx, smallNode N
 
 };
 
-int IntListManager::GetLength(int ListIdx)
-{
-	return data[ListIdx].f.length;
-};
-
 void IntListManager::Release(int ListIdx)
 {
 	while (ListIdx != endMarker)

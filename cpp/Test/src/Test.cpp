@@ -90,6 +90,7 @@ void testListManager()
 				{
 					it->AddItem( j );
 				}
+				delete it;
 			}
 			break;
 
@@ -101,6 +102,7 @@ void testListManager()
 				IntListManager::ReadIterator* it = ilm->GetReadIterator(childListId);
 				for (int j = 0; j < lth; j++)
 					_ASSERT_EXPR(it->GetNextItem()->node.idx == j, "Software issue - wrong Data found in the List.");
+				delete it;
 			}
 			break;
 		case 2:
@@ -174,7 +176,7 @@ void TestGaming(board Pos)
 	{
 		t->reset();
 		if (redNM == NULL)
-			redNM = new NodeManager(40000000, 0, Pos, 0, 0.1);
+			redNM = new NodeManager(40000000, 0, Pos, 0, 0.01);
 		else
 		{
 			redNM->DisposeTree();
@@ -201,10 +203,6 @@ void TestGaming(board Pos)
 		moveCnt++;
 		MoveManager::addMoveToBoard(Pos, 0, (redMove = redNM->BestMove()));
 
-		redNM->ImplementMoveToTree(redMove);
-		if ( blueNM )
-			blueNM->ImplementMoveToTree(redMove);
-
 		cout << (std::to_string(moveCnt) + "."
 				+ MoveManager::packMoveToString(redMove)
 				+ " Depth:" + std::to_string(redNM->GetMaxDepth())
@@ -212,11 +210,18 @@ void TestGaming(board Pos)
 		cout << redNM->ValuesToString() << endl;
 		cout << BoardManager::ToString(Pos) << endl;
 
+		redNM->ImplementMoveToTree(redMove);
+		if (blueNM)
+			blueNM->ImplementMoveToTree(redMove);
+
 		redNM->ResetMaxDepth();
 		t->reset();
 
 		if (blueNM == NULL)
+		{
 			blueNM = new NodeManager(40000000, 1, Pos, 1, 1);
+			blueNM->ImplementMoveToTree(redMove);
+		}
 		else
 		{
 			blueNM->DisposeTree();
@@ -226,7 +231,7 @@ void TestGaming(board Pos)
 		{
 			blueNM->SelectAction(true);
 
-			// simulate ponder for red
+			// simulate a bit ponder for red
 			if ( k < 20000 )
 				redNM->SelectAction(true);
 
@@ -245,15 +250,15 @@ void TestGaming(board Pos)
 		moveCnt++;
 		MoveManager::addMoveToBoard(Pos, 1, (blueMove = blueNM->BestMove()));
 
-		redNM->ImplementMoveToTree(blueMove);
-		blueNM->ImplementMoveToTree(blueMove);
-
 		cout << (std::to_string(moveCnt) + "."
 				+ MoveManager::packMoveToString(blueMove)
 				+ " Depth:" + std::to_string(blueNM->GetMaxDepth())
 				+ " Expands:" + std::to_string( expands ) ) << endl;
 		cout << blueNM->ValuesToString() << endl;
 		cout << BoardManager::ToString(Pos) << endl;
+
+		redNM->ImplementMoveToTree(blueMove);
+		blueNM->ImplementMoveToTree(blueMove);
 
 		blueNM->ResetMaxDepth();
 		t->reset();
@@ -275,8 +280,6 @@ void TestGaming(board Pos)
 			cout << "Rot hat gewonnen." << endl;
 	}
 	cout << "Nano Seconds per playout = " + std::to_string((ms * 1000000) / totalExpands) << endl;
-	std::string i;
-	cin >> i;
 }
 
 void RealGame(int argc, char**argv)
@@ -337,7 +340,7 @@ void RealGame(int argc, char**argv)
 }
 
 int main(int argc, char**argv) {
-	srand( 234567891 );
+	// srand( 234567891 );
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
 
@@ -357,7 +360,10 @@ int main(int argc, char**argv) {
 		"0........0" \
 		".11111111." ), b);
 	
-	TestGaming( b );
-	// RealGame(argc, argv);
+	// TestGaming( b );
+	RealGame(argc, argv);
+	std::string i;
+	// cin >> i;
+
 	return 0;
 }

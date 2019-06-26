@@ -36,7 +36,12 @@ public:
 	};
 	IntListManager( int );
 	int ReserveList();
-	int GetLength(int ListIdx);
+
+	inline int GetLength(int ListIdx)
+	{
+		return data[ListIdx].f.length;
+	};
+
 	void Release(int ListIdx);
 	ReadIterator* GetReadIterator(int ListIdx);
 	WriteIterator* GetWriteIterator(int ListIdx);

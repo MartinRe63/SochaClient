@@ -377,7 +377,7 @@ int parseMassage(int sockFD) {
         parseTag(sockFD);
         //printf("Last Tag: %d, %d\n", g_opendTag[g_openTagCount-1], g_openTagCount);
     } while ((g_openTagCount > 1 || g_currentChar < g_currentLenght - 5) && g_openTagCount);
-    printf("Server Nachricht: %s\n", g_messageBuffer);
+    // printf("Server Nachricht: %s\n", g_messageBuffer);
     return g_openTagCount;
 }
 
