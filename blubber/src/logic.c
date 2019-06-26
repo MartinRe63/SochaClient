@@ -30,7 +30,7 @@ int logic_isInitialized(){
 }
 void logic_setMoveRequestFlag() {
     g_moveRequest = 1;
-	g_myTurnTime = clock() + CLOCKS_PER_SEC; // +(CLOCKS_PER_SEC * 7) / 8;
+	g_myTurnTime = clock() + CLOCKS_PER_SEC + (CLOCKS_PER_SEC * 7) / 8;
 }
 void logic_setState(State state){
     if(state.turn == 0){
