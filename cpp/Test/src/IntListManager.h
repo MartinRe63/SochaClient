@@ -75,7 +75,16 @@ private:
 			nextFreeId fId;
 		};
 	};
-	int GetBlockIdx(int ListIdx, int Idx);
+	inline int GetBlockIdx(int ListIdx, int Idx)
+	{
+		int blockCnt = (Idx + 1) / blockDataSize;
+		int idx = ListIdx;
+		for (int k = 0; k < blockCnt; k++)
+		{
+			idx = data[idx].s.h.nextIdx;
+		}
+		return idx;
+	};
 	void Add(int ListIdx, int BlockIdx, int relativeIdx, smallNode NewItem);
 
 	listData* data;

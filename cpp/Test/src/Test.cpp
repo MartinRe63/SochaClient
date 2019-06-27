@@ -360,8 +360,8 @@ int main(int argc, char**argv) {
 		"0........0" \
 		".11111111." ), b);
 	
-	// TestGaming( b );
-	RealGame(argc, argv);
+	TestGaming( b );
+	// RealGame(argc, argv);
 	std::string i;
 	// cin >> i;
 

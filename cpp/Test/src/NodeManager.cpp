@@ -77,7 +77,7 @@ void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
 void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int depth)
 {
 	// fill the childList with valid moves based on the current position
-	_ASSERT_EXPR( SN->sPM.isSuperPackedMove == 1, "This node is already expanded.");
+	assert( SN->sPM.isSuperPackedMove == 1 ); // "This node is already expanded.");
 
 	//
 	// expand the packed Node Info
@@ -94,7 +94,7 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 		previousNodeIdx.node.isNoIdx = firstNodeIdx.node.isNoIdx;
 	}
 
-	_ASSERT_EXPR( memory[nodeId].node.childs.id == nullChildId, "Software Issue - Childs available.");
+	assert( memory[nodeId].node.childs.id == nullChildId ); // , "Software Issue - Childs available.");
 
 	//
 	// and expand all his children

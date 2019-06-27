@@ -1,4 +1,5 @@
 #include <exception>
+#include <assert.h>
 #include <iostream>
 #include <crtdbg.h>
 #include <stdlib.h>
@@ -26,22 +27,7 @@ FreeArrayManager::FreeArrayManager(nextFreeId* firstArrayEntry, int ArrayLength,
 	itemsAvailable = ArrayLength;
 }
 
-int FreeArrayManager::ReserveNextFree()
-{
-	int ret = firstFreeId;
-	_ASSERT_EXPR( ret < maxFreeId, "No free Element available.");
-	if (ret >= maxFreeId || ! HasFreeItemsAvailable())
-	{
-		// cout << "test" << endl; // (std::to_string("Itemsize:") + std::to_string(itemSize) + " no more element available.") << endl;
-		throw std::exception(); // this should force an out of bound exception, if the result -1 is not checked.
-	}
-	nextFreeId* item = GetItem(firstFreeId);  // GetItem(firstFreeId);
-	_ASSERT_EXPR ( item->isFree, "Unknown Software Issue - firstFreeId is not a free item.");
-	firstFreeId = item->nextFreeId;
-	itemsAvailable--;
-	item->isFree = 0;
-	return (ret);
-}
+
 void FreeArrayManager::DisposeAt(int ToFreeId)
 {
 	nextFreeId* item = GetItem( ToFreeId ); // GetItem(ToFreeId);

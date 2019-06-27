@@ -39,17 +39,6 @@ void IntListManager::Release(int ListIdx)
 	}
 };
 
-int IntListManager::GetBlockIdx(int ListIdx, int Idx)
-{
-	int blockCnt = (Idx + 1) / blockDataSize;
-	int idx = ListIdx; 
-	for (int k = 0; k < blockCnt; k++)
-	{
-		idx = data[idx].s.h.nextIdx;
-	}
-	return idx;
-};
-
 IntListManager::ReadIterator* IntListManager::GetReadIterator(int ListIdx)
 {
 	return new IntListManager::ReadIterator(ListIdx, this);
