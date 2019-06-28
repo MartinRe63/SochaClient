@@ -59,9 +59,9 @@ private:
 	void releaseNode(smallNode NodeId, int NodeIdToExclude);
 
 	void expandNode(smallNode* sN , int moveColor, board position, int depth);
-	double rollOut( int color, board pos, int depth, bool& gameEnd );
+	double rollOut( int color, board pos, int depth, bool& gameEnd, int potentialMoveCnt[2]);
 
-	smallNode * selectMove(smallNode * sN);
+	smallNode * selectMove(smallNode * sN, int& potentialPositiveValueMoves);
 
 	void updateStat( int nodeId, double value );
 	void CopyNode( smallNode& from, smallNode& to);
@@ -84,5 +84,6 @@ private:
 	board pos;
 	int maxDepth;
 	double deepFactor;
+	long deepMultiplier;
 
 };

@@ -11,16 +11,7 @@
 #include "MoveManager.h"
 #include "MaskManager.h"
 
-static mov dirVectors[] = {
-	{1, 0},
-	{1, 1},
-	{0, 1},
-	{-1, 1},
-	{-1, 0},
-	{-1, -1},
-	{0, -1},
-	{1, -1}
-};
+
 
 unsigned MoveManager::getMove(int color, board SourceBoard, board DestinationBoard)
 {

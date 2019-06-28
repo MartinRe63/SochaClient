@@ -7,9 +7,7 @@
 //============================================================================
 
 #include <iostream>
-#include <ctime>
 #include <ratio>
-#include <chrono>
 
 #include <stdlib.h>
 #include <assert.h>
@@ -19,43 +17,11 @@
 #include "NodeManager.h"
 #include "FreeArrayManager.h"
 #include "IntListManager.h"
+#include "ElapsedTimer.h"
 #include "serverIO.h"
 #include "logic.h"
 
-
 using namespace std;
-using namespace std::chrono;
-class ElapsedTimer {
-	// allows for easy reporting of elapsed time
-	high_resolution_clock::time_point t1;
-
-public:
-	ElapsedTimer() {
-		t1 = high_resolution_clock::now();
-	}
-
-	long elapsed() {
-		duration<double, std::milli> time_span = high_resolution_clock::now() - t1;
-		return time_span.count();
-	}
-
-	void reset() {
-		t1 = high_resolution_clock::now();
-	}
-
-	std::string toString() {
-		// now resets the timer...
-		std::string ret = elapsed() + " ms elapsed";
-		reset();
-		return ret;
-	}
-
-	static void testElapsed(std::string args[]) 
-	{
-		ElapsedTimer* t = new ElapsedTimer();
-		cout<<("ms elasped: " + t->elapsed());
-	}
-};
 
 
 void testListManager()
@@ -232,15 +198,15 @@ void TestGaming(board Pos)
 			blueNM->SelectAction(true);
 
 			// simulate a bit ponder for red
-			if ( k < 20000 )
-				redNM->SelectAction(true);
+			// if ( k < 20000 )
+			// 	 redNM->SelectAction(true);
 
 			// System.out.println( nm.LastPositionToString() );
 			expands++;
 			if ( ( k % 100 ) == 99 )
 			{
 				int e = t->elapsed();
-				if ( e > 2950 )
+				if ( e > 1950 )
 					k = INT_MAX-1;
 			}
 		}
@@ -265,7 +231,7 @@ void TestGaming(board Pos)
 
 		boardpane blockList[2][16]; // all blocks of a board
 		int blockCnt[2]; // blocklist for red and blue
-		result = BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0, gameEnd );
+		result = BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0, gameEnd, blockCnt );
 
 		/* Total memory currently in use by the JVM */
 		// System.out.println("Total memory (bytes): " +  Runtime.getRuntime().totalMemory() );
@@ -360,8 +326,8 @@ int main(int argc, char**argv) {
 		"0........0" \
 		".11111111." ), b);
 	
-	TestGaming( b );
-	// RealGame(argc, argv);
+	// TestGaming( b );
+	RealGame(argc, argv);
 	std::string i;
 	// cin >> i;
 

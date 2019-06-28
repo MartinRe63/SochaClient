@@ -5,6 +5,8 @@
  *      Author: mrenneke
  */
 // #include <string>
+#include <assert.h>
+#include <algorithm>
 #include <iostream>
 #include <crtdbg.h>
 #include <intrin.h>
@@ -210,10 +212,12 @@ double BoardManager::Analysis(int moveCnt, boardpane blockListAll[][16], int blo
 	return -1;
 }
 
-static const double factor = 0.6 / (512 * 16);
+static const double factorBlocks = 0.2 / (512 * 16);
+static const double factorBlockCount = 0.1 / 512;
+static const double factorMoveCount = 0.3 / 512;
 static long long dbg_cnt = 0;
 
-double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd)
+double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd, int potentialMoveCnt[2])
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
@@ -225,10 +229,13 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	//}
 	
 	gameEnd = false;
-	long valColor = GetPosValue(pos, color, blockList, blockCnt);
+	long valColor = GetValueOfBlocks(pos, color, blockList, blockCnt);
 	int oppositeColor = !color;
-	long valOppositeColor = GetPosValue(pos, oppositeColor, blockList, blockCnt);
-	double ret = (valColor / blockCnt[color] - valOppositeColor / blockCnt[oppositeColor]) * factor + 0.5;
+	long valOppositeColor = GetValueOfBlocks(pos, oppositeColor, blockList, blockCnt);
+	double ret = (valColor - valOppositeColor ) * factorBlocks + 
+		(1/blockCnt[color] - 1/blockCnt[oppositeColor] )*factorBlockCount +
+		(potentialMoveCnt[color] - potentialMoveCnt[oppositeColor])*factorMoveCount +
+		0.5;
 	double res;
 	// foundGameEnd = false;
 	if ((res = BoardManager::Analysis(depth, blockList, blockCnt, pos, firstMoveDepth)) >= 0)
@@ -254,6 +261,143 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	return ret;
 }
 
+
+int int128_ffs(boardpane value) {
+	int id;
+#ifndef _WIN
+	if ((id = __builtin_ffsll(value.v0)))
+		return id;
+	else if ((id = __builtin_ffsll(value.v1)))
+		return id + 64;
+#else
+	unsigned long ret = 0;
+	unsigned char res = _BitScanForward64(&ret, value[0]); // Long.numberOfTrailingZeros(low);
+	if (res == 0)
+	{
+		res = _BitScanForward64(&ret, value[1]);
+		if (res == 0)
+			return 0;
+		else
+			ret += 64;
+		return ret + 1;
+	}
+#endif
+	return ret + 1;
+}
+void int128_and(boardpane v1, int128 v2, boardpane& r) {
+	r[0] = v1[0] & v2.v0;
+	r[1] = v1[1] & v2.v1;
+}
+signed char getConnectedCount(int id, boardpane data, signed char fish[], signed char *fishCount) {
+	//Prüfe ob das feld belegt ist
+	// assert(int128_notNull(int128_and(*data, m_field[id])));
+	fish[*fishCount] = id;
+	*fishCount = *fishCount + 1;
+	//Bit auf diesem Feld auf Null
+	data[0] ^= MaskManager::m_field[id].v0;
+	data[1] ^= MaskManager::m_field[id].v1;
+	signed char connections = 1;
+	int id2;
+	//int128_debugWrite(neighbors);
+	boardpane res;
+	int128_and(data, MaskManager::m_fieldNeighbors[id][0], res);
+	while ((id2 = int128_ffs(res))) {
+		connections += getConnectedCount(id2 - 1, data, fish, fishCount);
+		int128_and(data, MaskManager::m_fieldNeighbors[id][0], res);
+	}
+	return connections;
+}
+
+
+const int color_red = 0;
+const int color_blue = 1;
+double BoardManager::board_rateState(board b, int turn, int turningColor, bool& gameEnd) {
+	board cpy; 
+	BoardManager::Copy( b, cpy );
+	signed char swarmSizes[2][16] = { 0 };
+	signed char fish[2][16];
+	signed char swarmCount[2] = { 0, 0 };
+	signed char fishCount[2] = { 0, 0 };
+	signed char maxSwarmSize[2] = { 0, 0 };
+	for (int c = 0; c < 2; c++) {
+		int id;
+		while ((id = int128_ffs(cpy[c]))) {
+			swarmSizes[c][swarmCount[c]] = getConnectedCount(id - 1, cpy[c], fish[c], &fishCount[c]);
+			if (swarmSizes[c][maxSwarmSize[c]] < swarmSizes[c][swarmCount[c]]) {
+				maxSwarmSize[c] = swarmCount[c];
+			}
+			swarmCount[c]++;
+		}
+	}
+	if (turn % 2 == 0) {
+		if ((fishCount[color_red] == swarmSizes[color_red][maxSwarmSize[color_red]] && fishCount[color_blue] == swarmSizes[color_blue][maxSwarmSize[color_blue]]) || turn == 60) {
+			if (swarmSizes[turningColor][maxSwarmSize[turningColor]] > swarmSizes[!turningColor][maxSwarmSize[!turningColor]]) {
+				gameEnd = 1;
+				return 1;
+			}
+			if (swarmSizes[!turningColor][maxSwarmSize[!turningColor]] > swarmSizes[turningColor][maxSwarmSize[turningColor]]) {
+				gameEnd = 1;
+				return 0;
+			}
+			gameEnd = 1;
+			return 0.5f;
+		}
+		if (fishCount[turningColor] == swarmSizes[turningColor][maxSwarmSize[turningColor]]) {
+			gameEnd = 1;
+			return 1;
+		}
+		if (fishCount[!turningColor] == swarmSizes[!turningColor][maxSwarmSize[!turningColor]]) {
+			gameEnd = 1;
+			return 0;
+		}
+	}
+	long totalFishDist[2] = { 0, 0 };
+	long blocker[2] = { 0, 0 };
+	//float connector[2] = {0};
+
+	//int position[2] = {0};
+	for (int c = 0, c2 = 1; c < 2; c++, c2--) {
+		for (int s1 = 0; s1 < swarmCount[c]; s1++) {
+			int start1 = 0;
+			for (int f1 = start1; f1 < start1 + swarmSizes[c][s1]; f1++) {
+				for (int f2 = start1 + swarmSizes[c][s1]; f2 < fishCount[c]; f2++) {
+					boardpane res;
+					int128_and(b[c2], MaskManager::m_blocker[fish[c][f1]][fish[c][f2]], res);
+					blocker[c] += BitManager::BitCnt(res) * 10000 /
+						MaskManager::m_blockingFields[fish[c][f1]][fish[c][f2]];
+					totalFishDist[c] += MaskManager::m_distance[fish[c][f1]][fish[c][f2]] * 10000;
+				}
+			}
+			start1 += swarmSizes[c][s1];
+		}
+		totalFishDist[c] += 10000 + blocker[c] * 16;
+	}
+	float bs = (float)swarmSizes[turningColor][maxSwarmSize[turningColor]] / (swarmSizes[0][maxSwarmSize[0]] + swarmSizes[1][maxSwarmSize[1]]);
+	float d = (float)totalFishDist[!turningColor] / (totalFishDist[1] + totalFishDist[0] + 1);
+	float blocking = (blocker[!turningColor]) / (blocker[1] + blocker[0] + 1);
+
+	float k_bs = (1.0 / 60.0 * turn);
+	float k_d = 1;
+
+	float rating = ( bs * k_bs + d * k_d ) / ( k_bs + k_d );
+	if ( false || (rating < 0 || rating > 1)) {
+		printf("TC: %d\n", turningColor);
+		printf("BL: %f, %f\n", blocker[turningColor], blocker[!turningColor]);
+		printf("BS: %d, %d\n", swarmSizes[turningColor][maxSwarmSize[turningColor]], swarmSizes[!turningColor][maxSwarmSize[!turningColor]]);
+		printf("SC: %d, %d\n", swarmCount[turningColor], swarmCount[!turningColor]);
+		printf("DI: %f, %f\n", totalFishDist[turningColor], totalFishDist[!turningColor]);
+		//printf("CN: %f, %f\n", connector[turningColor], connector[!turningColor]);
+		printf("Blocker   : %f\n", blocking);
+		//printf("Connector : %f\n", connecting);
+		printf("Biggest S : %f\n", bs);
+		printf("Fish Dist : %f\n", d);
+	}
+	assert(rating >= 0);
+	assert(rating <= 1);
+	return rating;
+}
+
+
 string BoardManager::AnalysisToString(double val)
 {
 	string ret = "The winner is ";
@@ -265,7 +409,7 @@ string BoardManager::AnalysisToString(double val)
 		return "The game ends unentschieden.";
 }
 
-long BoardManager::GetPosValue(board pos, int color, boardpane blockList[][16], int blockCnt[])
+long BoardManager::GetValueOfBlocks(board pos, int color, boardpane blockList[][16], int blockCnt[])
 {
 	// System.out.println(PosManager.ToString( pos1 ));
 	blockCnt[color] = BoardManager::GetBlockAndCnt(pos[color], blockList[color]);

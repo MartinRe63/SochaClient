@@ -15,6 +15,7 @@
 #include "SuperPackedMove.h"
 #include "NodeManager.h"
 #include "BoardManager.h"
+#include "ElapsedTimer.h"
 
 using namespace std;
 
@@ -26,13 +27,14 @@ int g_myColor = 0;
 int g_moveRequest = 0;
 int g_initialized = 0;
 packedMove myMove;
-clock_t g_myTurnTime;
+ElapsedTimer* g_myTurnTime = new ElapsedTimer();
+
 NodeManager* nodeManager = NULL;
 
 
 void logic_init() {
 	board b;
-	nodeManager = new NodeManager(40000000, g_myColor, b, 0, 0.1);
+	nodeManager = new NodeManager(40000000, g_myColor, b, 0, 0.01);
 }
 
 void logic_setMyColor(int color){
@@ -44,7 +46,7 @@ int logic_isInitialized(){
 }
 void logic_setMoveRequestFlag() {
     g_moveRequest = 1;
-	g_myTurnTime = clock() + CLOCKS_PER_SEC; + (CLOCKS_PER_SEC * 7) / 8;
+	g_myTurnTime->reset();
 }
 void logic_setState(State state){
     if(state.turn == 0)
@@ -70,11 +72,11 @@ void logic_update() {
     if (g_moveRequest) {
         int expandCount = 0;
         //printf("Test %d\n", g_currentColor);
-		clock_t c = clock();
-        while(c < g_myTurnTime){
-			nodeManager->SelectAction(true);
-            expandCount++;
-			c = clock();
+		// clock_t c = clock();
+        while(g_myTurnTime->elapsed() < 1950){
+			for ( int i = 0; i < 100; i++)
+				nodeManager->SelectAction(true);
+            expandCount+=100;
         }
         //printf("Expand Count: %d\n", expandCount);
         //printf("Color: %d\n", g_currentColor);
@@ -106,11 +108,14 @@ void logic_update() {
 
 		nodeManager->ImplementMoveToTree(m);
 		nodeManager->DisposeTree();
+		nodeManager->ResetMaxDepth();
 
         //board_printCurrentState(g_currentBoard);
         g_moveRequest = 0;
         g_currentColor = !g_myColor;
         g_turnCount++;
+
+
         //To Prevent Certain Bugs do one Expand instantly
     }
     else if ( g_initialized ) {

@@ -13,6 +13,22 @@
 
 using namespace std;
 
+typedef	struct {
+	unsigned long long v0;
+	unsigned long long v1;
+} int128;
+
+static int dirVectors[][2] = {
+	{1, 0},
+	{1, 1},
+	{0, 1},
+	{-1, 1},
+	{-1, 0},
+	{-1, -1},
+	{0, -1},
+	{1, -1}
+};
+
 class MaskManager
 {
 	//
@@ -29,9 +45,22 @@ public:
 	// A fish at 1,x or x,1 has a value 1
 	static uint64_t fishValueMasks[5][2]; // = new int64_t[5][2];  // Dimension - value, bitmask
 
+	static int128 m_moveDist[100][4];
+	static int128 m_field[100];
+	static int128 m_fieldNeighbors[100][9];
+	static int128 m_fieldDistanceSearch[100][7];
+	static int128 *m_fieldSkipCheck[100][8];
+	static int128 m_blocker[100][100];
+	static unsigned char m_blockingFields[100][100];
+	static unsigned char m_fieldNeighborIDs[100][9];
+	static unsigned char m_maxMoveDistance[100][8];
+	static unsigned char m_positionValue[100];
+	static unsigned char m_distance[100][100];
+
 	static void initMasks();
 
 	static std::string initGame();
+	static void initMasksBlubber();
 };
 
 #endif /* MASKMANAGER_H_ */
