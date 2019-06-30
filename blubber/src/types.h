@@ -40,4 +40,14 @@ enum {
     color_red,
     color_blue
 };
+typedef struct {
+	int firstChild;
+	float rating;
+	int visits;
+	Turn turn;
+	signed char childCount;
+	unsigned char GameEnd;
+} treeNode;
+
+
 #endif

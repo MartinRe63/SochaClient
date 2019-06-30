@@ -25,15 +25,6 @@ enum {
     gameState_end = 1
 };
 
-typedef struct {
-    int firstChild;
-    float rating;
-    int visits;
-    Turn turn;
-    signed char childCount;
-    unsigned char GameEnd;
-} treeNode;
-
 int g_tree;
 int g_UsedMemory;
 treeNode *g_treeNodeMemory;
@@ -201,7 +192,7 @@ int getChildToExpand(int node) {
             currentRating = -fabs((((float) g_treeNodeMemory[n].visits + 1.0f) / g_treeNodeMemory[node].visits) - ((g_treeNodeMemory[n].rating) / totalChildRating));
 #else
             currentRating = g_treeNodeMemory[n].rating
-                    /* + 0.075 * sqrtf(log2f(g_treeNodeMemory[node].visits) / (g_treeNodeMemory[n].visits + EPSYLON))*/;
+                    + 0.075 * sqrtf(log2f(g_treeNodeMemory[node].visits) / (g_treeNodeMemory[n].visits + EPSYLON));
 #endif
 #else
             currentRating = (g_treeNodeMemory[n].rating / (g_treeNodeMemory[n].visits + EPSYLON))
@@ -242,12 +233,14 @@ float expand(int node, Board board, int depth, int turningColor) {
             //Get the Memory
             int n = g_treeNodeMemory[node].firstChild = allocMemory(turnCount);
             g_treeNodeMemory[node].childCount = (signed char) turnCount;
-            for (int i = 0; i < turnCount; i++, n++) {
+            for (int i = 0; i < turnCount; i++, n++) 
+			{
                 initializeNode(n, tmpTurns[i]);
-                Board tmpBoard = board;
-                board_applyTurn(&tmpBoard, turningColor, tmpTurns[i]);
-                g_treeNodeMemory[n].rating = board_rateState(tmpBoard, depth + 1, turningColor, &g_treeNodeMemory[n].GameEnd);
+				Board tmpBoard = board;
+				board_applyTurn(&tmpBoard, turningColor, tmpTurns[i]);
+				g_treeNodeMemory[n].rating = board_rateState(tmpBoard, depth + 1, turningColor, &g_treeNodeMemory[n].GameEnd);
             }
+			// board_diffRate(board, depth + 1, turningColor, g_treeNodeMemory + g_treeNodeMemory[node].firstChild, turnCount);
 #endif
 #ifdef MCTS
             returnRating = g_treeNodeMemory[node].rating = board_rateState(board, depth, !turningColor, &g_treeNodeMemory[node].GameEnd);

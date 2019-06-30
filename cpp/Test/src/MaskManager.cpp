@@ -13,6 +13,7 @@ uint64_t MaskManager::directionMasks[4][100][2];
 uint64_t MaskManager::moveMasks[8][10][100][2];
 uint64_t MaskManager::neighborMasks[100][2];
 uint64_t MaskManager::fishValueMasks[5][2];
+uint64_t MaskManager::ringOfFire[2][3][2];   // color, 2=(min x and min y = 4) 1=(min x and min y = 3), 1=high 0=low
 
 int128 MaskManager::m_moveDist[100][4];
 int128 MaskManager::m_field[100];
@@ -26,6 +27,7 @@ unsigned char MaskManager::m_maxMoveDistance[100][8];
 unsigned char MaskManager::m_positionValue[100];
 
 unsigned char MaskManager::m_distance[100][100];
+
 
 void MaskManager::initMasks(void) {
 	int xMove = 0;
@@ -87,7 +89,7 @@ void MaskManager::initMasks(void) {
 		for ( int x = 0; x < 10; x++)
 		{
 			int val = __min(x >= 5 ? 9-x : x, y >= 5 ? 9-y : y);
-			BitManager::SetBit(fishValueMasks[val], y*10+x);
+			BitManager::SetBit(MaskManager::fishValueMasks[val], y*10+x);
 		}
 	}
 
@@ -445,6 +447,10 @@ void initDistance() {
 			MaskManager::m_distance[f1][f2] = MaskManager::m_distance[f1][f2] * MaskManager::m_distance[f1][f2];
 		}
 	}
+}
+
+void initRingOfFire() {
+
 }
 
 void MaskManager::initMasksBlubber() {

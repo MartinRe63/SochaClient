@@ -4,12 +4,13 @@
 #include <list>
 #include "NodeManager.h"
 #include "BoardManager.h"
+#include "IntListManager.h"
 
 static double epsilon = (float) 1e-6;
 static unsigned nullChildId = (1 << 30)-1;
 static unsigned maxVisits = (1 << 30)-1;
 
-NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth, double DeepFactor)
+NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int FirstMoveDepth, double DeepFactor, int QuickRateTurn)
 {
 
 	// node properties
@@ -23,7 +24,7 @@ NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int First
 	//int childArr[];
 
 	memory = new m[NodeCount];
-	fam = new FreeArrayManager( &memory[0].free, NodeCount / 40, sizeof ( node ) );
+	fam = new FreeArrayManager( &memory[0].free, NodeCount / 30, sizeof ( node ) );
 	ilm = new IntListManager(NodeCount / 5);
 	firstBoard = FirstBoard;
 	
@@ -34,6 +35,8 @@ NodeManager::NodeManager(int NodeCount, int MyColor, board FirstBoard, int First
 	CopyNode(firstNodeIdx, previousNodeIdx);
 	deepFactor = DeepFactor;
 	deepMultiplier = (long)(100000 * deepFactor);
+	quickRateTurn = QuickRateTurn;
+	ri = ilm->GetReadIterator();
 }
 
 
@@ -100,8 +103,8 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	//
 	// and expand all his children
 	//
-	int childListId = memory[nodeId].node.childs.id = ilm->ReserveList();
 	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList);
+	int childListId = memory[nodeId].node.childs.id = ilm->ReserveList(moveCnt);
 	IntListManager::WriteIterator* wIt = ilm->GetWriteIterator(childListId);
 	for (int i = 0; i < moveCnt; i++) {
 		smallNode sN;
@@ -111,20 +114,24 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	delete wIt;
 }
 
-double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd, int potentialMoveCnt[2] )
+double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd )
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
 	// check if this is the secondMoveColor to check if moveColor will win = 1 or loss = 0
 	// return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth, gameEnd, potentialMoveCnt);
-	return BoardManager::board_rateState(pos, depth + firstMoveDepth, color, gameEnd);
+	int turn = depth + firstMoveDepth;
+	if (turn < quickRateTurn)
+		return BoardManager::quick_rateState(pos, turn, color, gameEnd);
+	else
+		return BoardManager::board_rateState(pos, turn, color, gameEnd);
 }
 
 static int randRefresh = 3;
 static int randRefreshCnt = 0;
 static int lr = rand() % 1024;
 
-smallNode* NodeManager::selectMove(smallNode* sN, int& potentialPositiveValueMoves ) 
+smallNode* NodeManager::selectMove(smallNode* sN, int turn ) 
 {
 	smallNode* selectedNode = 0;
 	long bestValue = INT32_MIN; //  Double.NEGATIVE_INFINITY;
@@ -133,9 +140,9 @@ smallNode* NodeManager::selectMove(smallNode* sN, int& potentialPositiveValueMov
 	m* node = &memory[sN->node.idx];
 	_ASSERT_EXPR( node->free.isFree == 0 , "node should not be free." );
 	_ASSERT_EXPR( node->node.childs.id != nullChildId, "each node should have a child list." );
-	IntListManager::ReadIterator* i = ilm->GetReadIterator(node->node.childs.id);
-	potentialPositiveValueMoves = 0;
-	smallNode* iSN = i->GetNextItem();
+	ri->Init(node->node.childs.id);
+	// potentialPositiveValueMoves = 0;
+	smallNode* iSN = ri->GetNextItem();
 	while ( iSN != 0 ) {
 		int moveValue;
 		long visitCnt = 1;
@@ -151,8 +158,6 @@ smallNode* NodeManager::selectMove(smallNode* sN, int& potentialPositiveValueMov
 			visitCnt = childNode->node.v.visits;
 			totValue = childNode->node.totValue;
 		}
-		if (moveValue > 0)
-			potentialPositiveValueMoves++;
 
 		// childvisits == 0, when the end is reached
 		if ( randRefreshCnt++ >= randRefresh )
@@ -161,8 +166,10 @@ smallNode* NodeManager::selectMove(smallNode* sN, int& potentialPositiveValueMov
 			randRefreshCnt = 0;
 		}
 		
+		long realDeepMultiplier = turn < quickRateTurn ? 100000 : deepMultiplier;
+
 		double r = 1.0 / (lr + 1);
-		long uctValue = (totValue * 1000000 + node->node.v.visits * deepMultiplier + lr + moveValue * 10) / (visitCnt * 100 + 1);
+		long uctValue = (totValue * 1000000 + node->node.v.visits * realDeepMultiplier + lr + moveValue * 10) / (visitCnt * 100 + 1);
 		//double uctValue =
 		//	totValue / (visitCnt + epsilon) +
 		//	std::sqrt(deepFactor * std::log(node->node.v.visits + 1) / (visitCnt + epsilon)) +
@@ -175,9 +182,8 @@ smallNode* NodeManager::selectMove(smallNode* sN, int& potentialPositiveValueMov
 			selectedNode = iSN;
 			bestValue = uctValue;
 		}
-		iSN = i->GetNextItem();
+		iSN = ri->GetNextItem();
 	}
-	delete i;
 	// System.out.println("Returning: " + selected);
 	_ASSERT_EXPR( selectedNode != 0, "Child not found." );
 	return selectedNode;
@@ -202,10 +208,10 @@ void NodeManager::SelectAction(bool oneCycle)
 		visited[visitedCnt++] = cur;
 		int nextMoveColor = currentMoveColor;
 		BoardManager::Copy(firstBoard, pos);
-		int positivePotientialMoveCnt[2] = { 40,40 };
+		// int positivePotientialMoveCnt[2] = { 40,40 };
 		while ( cur->sPM.isSuperPackedMove != 1 ) // ! isLeaf
 		{
-			cur = selectMove(cur, positivePotientialMoveCnt[nextMoveColor]);
+			cur = selectMove(cur, visitedCnt + firstMoveDepth);
 
 			// System.out.println("Adding: " + cur);
 			visited[visitedCnt++] = cur; // visited.add(cur);
@@ -226,7 +232,7 @@ void NodeManager::SelectAction(bool oneCycle)
 		{
 			// expand only if this is no game end node
 			expandNode(cur, nextMoveColor, pos, visitedCnt);               //  cur.expand();
-			cur = selectMove(cur, positivePotientialMoveCnt[nextMoveColor]);                                         // TreeNode newNode = cur.select();
+			cur = selectMove(cur, visitedCnt + firstMoveDepth);            // TreeNode newNode = cur.select();
 
 			visited[visitedCnt++] = cur;                                   // visited.add(newNode);
 			MoveManager::addMoveToBoard( pos, nextMoveColor, MoveManager::superPack2packMove(cur->sPM) );
@@ -243,7 +249,7 @@ void NodeManager::SelectAction(bool oneCycle)
         bool gameEnd = false;
 		if ( cur->sPM.isGameEndNode == 0 )
 		{
-			value = rollOut( nextMoveColor, pos, visitedCnt, gameEnd, positivePotientialMoveCnt );
+			value = rollOut( nextMoveColor, pos, visitedCnt, gameEnd );
 			if ( gameEnd )
 			{
 				std::string s = BoardManager::ToString(pos);
@@ -345,15 +351,18 @@ void NodeManager::DisposeTree()
 
 void NodeManager::ImplementMoveToTree(packedMove move)
 {
-	smallNode* node = findNode(firstNodeIdx.node.idx, move);
-	if ( node )
+	if ( ! firstNodeIdx.sPM.isSuperPackedMove)
 	{
-		CopyNode( *node, firstNodeIdx );
-	}
-	else
-	{
-		// previous will stay until it's all released
-		this->InitFirstNode();
+		smallNode* node = findNode(firstNodeIdx.node.idx, move);
+		if (node)
+		{
+			CopyNode(*node, firstNodeIdx);
+		}
+		else
+		{
+			// previous will stay until it's all released
+			this->InitFirstNode();
+		}
 	}
 	firstMoveDepth += 1;
 	currentMoveColor = ! currentMoveColor;

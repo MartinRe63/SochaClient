@@ -173,6 +173,18 @@ void initFieldDistanceSearch() {
     }
 }
 
+void InitFishValueMask()
+{
+	for (int y = 0; y < 10; y++)
+	{
+		for (int x = 0; x < 10; x++)
+		{
+			int val = __min(x >= 5 ? 9 - x : x, y >= 5 ? 9 - y : y);
+			int128_setBitInVal( y * 10 + x, &fishValueMasks[val]);
+		}
+	}
+}
+
 void initBlocker() {
     for (int y1 = 0; y1 < 10; y1++) {
         for (int x1 = 0; x1 < 10; x1++) {
@@ -259,6 +271,15 @@ void initPositionValue() {
     }
 }
 
+void initDistance() {
+	for (int f1 = 0; f1 < 100; f1++) {
+		for (int f2 = 0; f2 < 100; f2++) {
+			m_distance[f1][f2] = Max(abs(f1 / 10 - f2 / 10), abs(f1 % 10 - f2 % 10));
+			m_distance[f1][f2] = m_distance[f1][f2] * m_distance[f1][f2];
+		}
+	}
+}
+
 void initMasks() {
     initMoveDist();
     initSkipCheck();
@@ -268,5 +289,7 @@ void initMasks() {
     initPositionValue();
     initFieldDistanceSearch();
     initBlocker();
+	initDistance();
+	InitFishValueMask();
 }
 

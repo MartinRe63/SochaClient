@@ -33,12 +33,14 @@ public:
 	static std::string ToString( board B);
 
 	static long blockValue(boardpane);
+	static unsigned long long quickBoardPaneValue(boardpane BP);
 	static void ExtendBlock(boardpane posData, boardpane block, uint64_t newFishesLow, uint64_t newFishesHigh, int firstFishPos);
 	static int GetBlockAndCnt(boardpane posData, boardpane blockList[]);
 
 	static double Analysis(int moveCnt, boardpane blockListAll[][16], int blockCount[], board pos, int FirstDepth);
 
 	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd, int potentialMoveCnt[2]);
+	static double quick_rateState(board b, int turn, int turningColor, bool & gameEnd);
 	static double board_rateState(board b, int turn, int turningColor, bool & gameEnd);
 	static std::string AnalysisToString(double val);
 	static void SetBoardValue(board b, int x, int y, int color);

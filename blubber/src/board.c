@@ -8,10 +8,11 @@
 #include "masc.h"
 #include "types.h"
 
-//#define RATE_SIMPLE
-#define RATE_2
-//#define RATE_1
+#define RATE_SIMPLE
+// #define RATE_2
+// #define RATE_1
 
+const int BLOCKADITY = 16;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -28,158 +29,268 @@ static position dirVectors[] = {
     {-1, 1}
 };
 int128 g_obstacles = {.v0 = 0, .v1 = 0};
+const float swarmRating = 1 / 30.0;
 
-#ifndef RATE_SIMPLE
+
+inline unsigned long long quickBoardPaneValue(int128 BP)
+{
+	unsigned long long res = Min(((__popcnt64(BP.v0 & fishValueMasks[4].v0) + __popcnt64(BP.v1 & fishValueMasks[4].v1))), 2ULL) * 8L;
+	res += res = Min(((__popcnt64(BP.v0 & fishValueMasks[3].v0) + __popcnt64(BP.v1 & fishValueMasks[3].v1))), 4ULL) * 4L;
+	res += res = Min(((__popcnt64(BP.v0 & fishValueMasks[2].v0) + __popcnt64(BP.v1 & fishValueMasks[2].v1))), 8ULL) * 2L;
+	return res;
+}
 
 signed char getConnectedCount(int id, int128 *data, signed char fish[], signed char *fishCount) {
-    //Prüfe ob das feld belegt ist
-    assert(int128_notNull(int128_and(*data, m_field[id])));
-    fish[*fishCount] = id;
-    *fishCount = *fishCount + 1;
-    //Bit auf diesem Feld auf Null
-    *data = int128_xor(*data, m_field[id]);
-    signed char connections = 1;
-    int id2;
-    //int128_debugWrite(neighbors);
-    while ((id2 = int128_ffs(int128_and(*data, m_fieldNeighbors[id][0])))) {
-        connections += getConnectedCount(id2 - 1, data, fish, fishCount);
-    }
-    return connections;
+	//Prüfe ob das feld belegt ist
+	assert(int128_notNull(int128_and(*data, m_field[id])));
+	fish[*fishCount] = id;
+	*fishCount = *fishCount + 1;
+	//Bit auf diesem Feld auf Null
+	*data = int128_xor(*data, m_field[id]);
+	signed char connections = 1;
+	int id2;
+	//int128_debugWrite(neighbors);
+	while ((id2 = int128_ffs(int128_and(*data, m_fieldNeighbors[id][0])))) {
+		connections += getConnectedCount(id2 - 1, data, fish, fishCount);
+	}
+	return connections;
 }
-#else
-signed char getConnectedCount(int id, int128 *data) {
-    assert(int128_notNull(int128_and(*data, m_field[id])));
-    //Bit auf diesem Feld auf Null
-    *data = int128_xor(*data, m_field[id]);
-    signed char connections = 1;
-    int id2;
-    while ((id2 = int128_ffs(int128_and(*data, m_fieldNeighbors[id][0])))) {
-        connections += getConnectedCount(id2 - 1, data);
-    }
-    return connections;
-}
-#endif
+
 #ifdef RATE_SIMPLE
 
 float board_rateState(Board b, int turn, int turningColor, unsigned char * GameEnd) {
     int currentColor = turningColor;
-    for (int t = turn; t <= 60; t++) {
-        if (t % 2 == 0) {
-            int128 cpy[2] = {b.data[0], b.data[1]};
-            int maxSwarmSize[2] = {0};
-            int swarmCount[2] = {-1};
-            for (int c = 0; c < 2; c++) {
-                int id;
-                while ((id = int128_ffs(cpy[c]))) {
-                    maxSwarmSize[c] = MAX(getConnectedCount(id - 1, cpy + c), maxSwarmSize[c]);
-                    swarmCount[c]++;
-                }
-            }
-            if ((!swarmCount[color_red] && !swarmCount[color_blue]) || t == 60) {
-                *GameEnd = t == turn;
-                if (maxSwarmSize[turningColor] > maxSwarmSize[!turningColor])
-                    return 1;
-                if (maxSwarmSize[!turningColor] > maxSwarmSize[turningColor])
-                    return 0;
 
-                return (float)rand() / RAND_MAX > 0.5f ? 1.0f : 0.0f;
-            }
-            if (!swarmCount[turningColor]) {
-                *GameEnd = t == turn;
-                return 1;
-            }
-            if (!swarmCount[!turningColor]) {
-                *GameEnd = t == turn;
-                return 0;
-            }
-        }
-        //Since the Game isn't finished do another Random Turn
-        Turn tmpTurns[128];
-        currentColor = !currentColor;
-        int turnCount = board_getPossibleTurns(b, currentColor, tmpTurns);
-        if (turnCount > 0) {
-            int rndTurnID = (int)((((float)(rand() / 2)) / (RAND_MAX / 2 + 1)) * turnCount);
-            board_applyTurn(&b, currentColor, tmpTurns[rndTurnID]);
-        } else {
-            return turningColor != currentColor;
-        }
-    }
-    assert(0);
-    return 0;
+	int128 cpy[2] = { b.data[0], b.data[1] };
+	signed char swarmSizes[2][16] = { 0 };
+	signed char fish[2][16];
+	signed char swarmCount[2] = { 0, 0 };
+	signed char fishCount[2] = { 0, 0 };
+	signed char maxSwarmSize[2] = { 0 };
+	for (int c = 0; c < 2; c++) {
+		int id;
+		while ((id = int128_ffs(cpy[c]))) {
+			swarmSizes[c][swarmCount[c]] = getConnectedCount(id - 1, cpy + c, fish[c], fishCount + c);
+			if (swarmSizes[c][maxSwarmSize[c]] < swarmSizes[c][swarmCount[c]]) {
+				maxSwarmSize[c] = swarmCount[c];
+			}
+			swarmCount[c]++;
+		}
+	}
+	if (turn % 2 == 0) {
+		if ((fishCount[color_red] == swarmSizes[color_red][maxSwarmSize[color_red]] && fishCount[color_blue] == swarmSizes[color_blue][maxSwarmSize[color_blue]]) || turn == 60) {
+			if (swarmSizes[turningColor][maxSwarmSize[turningColor]] > swarmSizes[!turningColor][maxSwarmSize[!turningColor]]) {
+				*GameEnd = 1;
+				return 1;
+			}
+			if (swarmSizes[!turningColor][maxSwarmSize[!turningColor]] > swarmSizes[turningColor][maxSwarmSize[turningColor]]) {
+				*GameEnd = 1;
+				return 0;
+			}
+			*GameEnd = 1;
+			return 0.5f;
+		}
+		if (fishCount[turningColor] == swarmSizes[turningColor][maxSwarmSize[turningColor]]) {
+			*GameEnd = 1;
+			return 1;
+		}
+		if (fishCount[!turningColor] == swarmSizes[!turningColor][maxSwarmSize[!turningColor]]) {
+			*GameEnd = 1;
+			return 0;
+		}
+	}
+	float bs = (float)swarmSizes[turningColor][maxSwarmSize[turningColor]] / (swarmSizes[0][maxSwarmSize[0]] + swarmSizes[1][maxSwarmSize[1]]);
+	// float d = (float)totalFishDist[!turningColor] / (totalFishDist[1] + totalFishDist[0] + 1);
+
+	float d;
+	unsigned long long redval = quickBoardPaneValue(b.data[0]);
+	unsigned long long blueval = quickBoardPaneValue(b.data[1]);
+	if (turningColor)
+		d = blueval / (blueval + redval + 1.0);
+	else
+		d = redval / (blueval + redval + 1.0);
+
+
+	// float blocking = (blocker[!turningColor]) / (blocker[1] + blocker[0]);
+	//float connecting = (float) connector[turningColor] / (connector[!turningColor] + connector[turningColor]);
+	//float k_p = /*(-1.0 / 60.0 * turn + 1)*/0;
+
+	float k_bs = (swarmRating * turn);
+	float k_d = 1;
+
+	float rating = (bs * k_bs + d * k_d) / (k_bs + k_d);
+
+	if (board_debug || (rating < 0 || rating > 1)) {
+		printf("TC: %d\n", turningColor);
+		//printf("BL: %lld, %lld\n", blocker[turningColor], blocker[!turningColor]);
+		printf("BS: %d, %d\n", swarmSizes[turningColor][maxSwarmSize[turningColor]], swarmSizes[!turningColor][maxSwarmSize[!turningColor]]);
+		printf("SC: %d, %d\n", swarmCount[turningColor], swarmCount[!turningColor]);
+		//printf("DI: %lld, %lld\n", totalFishDist[turningColor], totalFishDist[!turningColor]);
+		//printf("CN: %f, %f\n", connector[turningColor], connector[!turningColor]);
+		//printf("Blocker   : %f\n", blocking);
+		//printf("Connector : %f\n", connecting);
+		printf("Biggest S : %f\n", bs);
+		printf("Fish Dist : %f\n", d);
+	}
+	assert(rating >= 0);
+	assert(rating <= 1);
+	return rating;
 }
 #endif
 
 #ifdef RATE_1
-float board_rateState(Board b, int turn, int turningColor, unsigned char * GameEnd) {
-    int128 cpy[2] = {b.data[0], b.data[1]};
-    signed char swarmSizes[2][16] = {0};
-    signed char fish[2][16];
-    signed char swarmCount[2] = {0, 0};
-    signed char fishCount[2] = {0, 0};
-    signed char maxSwarmSize[2] = {0};
-    //Gather basic data like Fish Positions and connections
-    for (int c = 0; c < 2; c++) {
-        int id;
-        while ((id = int128_ffs(cpy[c]))) {
-            swarmSizes[c][swarmCount[c]] = getConnectedCount(id - 1, cpy + c, fish[c], fishCount + c);
-            if (swarmSizes[c][maxSwarmSize[c]] < swarmSizes[c][swarmCount[c]]) {
-                maxSwarmSize[c] = swarmCount[c];
-            }
-            swarmCount[c]++;
-        }
-    }
-    //check if one Player has already won
-    if (turn % 2 == 0) {
-        if ((fishCount[color_red] == swarmSizes[color_red][maxSwarmSize[color_red]] && fishCount[color_blue] == swarmSizes[color_blue][maxSwarmSize[color_blue]]) || turn == 60) {
-            if (swarmSizes[color_red][maxSwarmSize[color_red]] > swarmSizes[color_blue][maxSwarmSize[color_blue]]) {
-                *GameEnd = 1;
-                return 1;
-            }
-            if (swarmSizes[color_blue][maxSwarmSize[color_blue]] > swarmSizes[color_red][maxSwarmSize[color_red]]) {
-                *GameEnd = 1;
-                return 0;
-            }
-            *GameEnd = 1;
-            return 0.5f;
-        }
-        if (fishCount[color_red] == swarmSizes[color_red][maxSwarmSize[color_red]]) {
-            *GameEnd = 1;
-            return 1;
-        }
-        if (fishCount[color_blue] == swarmSizes[color_blue][maxSwarmSize[color_blue]]) {
-            *GameEnd = 1;
-            return 0;
-        }
-    }
 
-    int nearFish[2] = {0};
-    int position[2] = {0};
-    for (int c = 0, c2 = 1; c < 2; c++, c2--) {
-        for (int f = 0; f < fishCount[c]; f++) {
-            for (int i = 1, m = 1; i >= 0; i--, m++) {
-                nearFish[c] += int128_popcnt(int128_and(m_fieldNeighbors[fish[c][f]][i], b.data[c])) * m;
-            }
-            position[c] += m_positionValue[fish[c][f]];
-        }
-        nearFish[c] /= fishCount[c];
-        position[c] /= fishCount[c];
-    }
-    if (board_debug) {
-        printf("Near Fish : %d, %d\n", nearFish[0], nearFish[1]);
-        printf("Position  : %d, %d\n", position[0], position[1]);
-    }
+float quick_rateState(Board b, int turn, int turningColor)
+{
+	unsigned long long redval = quickBoardPaneValue(b.data[0]);
+	unsigned long long blueval = quickBoardPaneValue(b.data[1]);
+	if (turningColor)
+		return blueval / (blueval + redval + 1.0);
+	else
+		return redval / (blueval + redval + 1.0);
+}
 
-    float n = (float) nearFish[turningColor] / (nearFish[turningColor] + nearFish[!turningColor]);
-    float bs = (float) swarmSizes[turningColor][maxSwarmSize[turningColor]] /
-            (swarmSizes[turningColor][maxSwarmSize[turningColor]] + swarmSizes[!turningColor][maxSwarmSize[!turningColor]]);
-    float p = (float) position[turningColor] / (position[turningColor] + position[!turningColor]);
-    float k_p = (-1.0 / 60.0 * turn + 1);
-    float k_n = 0.25f;
-    float k_bs = (1.0 / 60.0 * turn);
-    if (board_debug) {
-        printf("P: %f,N %f,BS %f\n", p, n, bs);
-    }
-    return (p * k_p + n * k_n + bs * k_bs) / (k_bs + k_n + k_p);
+
+void board_diffRate(Board baseBoard, int turn, int tc, treeNode * treeNodes, int nodeCount) {
+	//Not turning Color
+	int ntc = !tc;
+	Board boardCpy = baseBoard;
+	signed char swarmSizes[2][16] = { 0 };
+	signed char fish[2][16];
+	signed char swarmCount[2] = { 0, 0 };
+	signed char fishCount[2] = { 0, 0 };
+	signed char maxSwarmSize[2] = { 0 };
+	for (int c = 0; c < 2; c++) {
+		int id;
+		while ((id = int128_ffs(boardCpy.data[c]))) {
+			swarmSizes[c][swarmCount[c]] = getConnectedCount(id - 1, boardCpy.data + c, fish[c], fishCount + c);
+			if (maxSwarmSize[c] < swarmSizes[c][swarmCount[c]]) {
+				maxSwarmSize[c] = swarmSizes[c][swarmCount[c]];
+			}
+			swarmCount[c]++;
+		}
+	}
+	for (int tn = 0; tn < nodeCount; tn++) {
+		long long totalFishDist[2] = { 0, 0 };
+
+		signed char currentSwarmSizes[2][16] = { 0 };
+		signed char currentFish[2][16];
+		signed char currentSwarmCount[2] = { 0, 0 };
+		signed char currentFishCount[2] = { 0, 0 };
+		signed char currentMaxSwarmSize[2] = { 0, 0 };
+
+		//Apply the turn.
+		Board currentBoard = baseBoard;
+		board_applyTurn(&currentBoard, tc, treeNodes[tn].turn);
+		boardCpy = currentBoard;
+		//Check if there is a fhish at the target Position
+		int fishEaten = int128_notNull(int128_and(m_field[treeNodes[tn].turn.target], baseBoard.data[ntc]));
+		int128 neighborCheck[2] = { 0 };
+		if (fishEaten)
+			neighborCheck[ntc] = m_fieldNeighbors[treeNodes[tn].turn.target][0];
+		neighborCheck[tc] = m_fieldNeighbors[treeNodes[tn].turn.start][0];
+		//Adjust the Swarms
+		for (int c = 0; c < 2; c++) {
+			//Check for swarms that meight have been disconnected
+			int id;
+			while ((id = int128_ffs(int128_and(neighborCheck[c], boardCpy.data[c])))) {
+				currentSwarmSizes[c][currentSwarmCount[c]] = getConnectedCount(id - 1, boardCpy.data + c, currentFish[c], currentFishCount + c);
+				if (currentMaxSwarmSize[c] < currentSwarmSizes[c][currentSwarmCount[c]]) {
+					currentMaxSwarmSize[c] = currentSwarmSizes[c][currentSwarmCount[c]];
+				}
+				currentSwarmCount[c]++;
+			}
+			//Check for swarms that meight have been connected
+			if (c == tc && int128_notNull(int128_and(m_field[treeNodes[tn].turn.target], boardCpy.data[c]))) {
+				currentSwarmSizes[c][currentSwarmCount[c]] = getConnectedCount(treeNodes[tn].turn.target, boardCpy.data + c, currentFish[c], currentFishCount + c);
+				if (currentMaxSwarmSize[c] < currentSwarmSizes[c][currentSwarmCount[c]]) {
+					currentMaxSwarmSize[c] = currentSwarmSizes[c][currentSwarmCount[c]];
+				}
+				currentSwarmCount[c]++;
+			}
+			//If a swarm has already been found.
+			if (currentSwarmCount[c] || (c == ntc && fishEaten)) {
+				//Add the rest of the unchanged Swarms
+				for (int s = 0, start = 0; s < swarmCount[c]; s++) {
+					//Check if the swarm hasn't already been processed
+					if (int128_notNull(int128_and(m_field[fish[c][start]], boardCpy.data[c]))) {
+						//Copy the fish that are part of the swarm
+						memcpy(currentFish[c] + currentFishCount[c], fish[c] + start, swarmSizes[c][s]);
+						currentSwarmSizes[c][currentSwarmCount[c]] = swarmSizes[c][s];
+						currentMaxSwarmSize[c] = MAX(currentMaxSwarmSize[c], currentSwarmSizes[c][currentSwarmCount[c]]);
+						currentFishCount[c] += swarmSizes[c][s];
+						currentSwarmCount[c]++;
+					}
+					start += swarmSizes[c][s];
+				}
+			}
+			else {
+				memcpy(currentFish[c], fish[c], fishCount[c]);
+				memcpy(currentSwarmSizes[c], swarmSizes[c], swarmCount[c]);
+				currentFishCount[c] = fishCount[c];
+				currentMaxSwarmSize[c] = maxSwarmSize[c];
+				currentSwarmCount[c] = swarmCount[c];
+			}
+		}
+		//Check for Winning Conditions
+		if (turn % 2 == 0) {
+			if ((currentSwarmCount[color_red] == 1 && currentSwarmCount[color_blue] == 1) || turn == 60) {
+				treeNodes[tn].GameEnd = 1;
+				if (currentMaxSwarmSize[tc] > currentMaxSwarmSize[ntc]) {
+					treeNodes[tn].rating = 1;
+				}
+				else if (currentMaxSwarmSize[ntc] > currentMaxSwarmSize[tc]) {
+					treeNodes[tn].rating = 0;
+				}
+				else {
+					treeNodes[tn].rating = 0.5f;
+				}
+			}
+			else {
+				if (currentSwarmCount[tc] == 1) {
+					treeNodes[tn].GameEnd = 1;
+					treeNodes[tn].rating = 1;
+				}
+				if (currentSwarmCount[ntc] == 1) {
+					treeNodes[tn].GameEnd = 1;
+					treeNodes[tn].rating = 0;
+				}
+			}
+		}
+		//assert(!treeNodes[tn].GameEnd);
+		if (!treeNodes[tn].GameEnd) {
+			for (int c = 0; c < 2; c++) {
+				long long blocker = 0;
+				int start = 0;
+				for (int s = 0; s < currentSwarmCount[c]; s++) {
+					for (int f1 = start; f1 < start + currentSwarmSizes[c][s]; f1++) {
+						for (int f2 = start + currentSwarmSizes[c][s]; f2 < currentFishCount[c]; f2++) {
+							int128 check;
+							check.v0 = currentBoard.data[!c].v0 & m_blocker[currentFish[c][f1]][currentFish[c][f2]].v0;
+							check.v1 = currentBoard.data[!c].v1 & m_blocker[currentFish[c][f1]][currentFish[c][f2]].v1;
+#ifndef _WIN
+							blocker += (_builtin_popcountll(check.v0) + _builtin_popcountll(check.v1)) / m_blockingFields[currentFish[c][f1]][currentFish[c][f2]];
+#else
+							long long v = (__popcnt64(check.v0) + __popcnt64(check.v1)) << 20;
+							blocker += v / m_blockingFields[currentFish[c][f1]][currentFish[c][f2]];
+#endif					
+							totalFishDist[c] += ( m_distance[currentFish[c][f1]][currentFish[c][f2]] << 20 );
+						}
+					}
+					start += currentSwarmSizes[c][s];
+				}
+				totalFishDist[c] += 1 + blocker * BLOCKADITY;
+			}
+			float bs = (float)currentMaxSwarmSize[tc] / (currentMaxSwarmSize[0] + currentMaxSwarmSize[1]);
+			float d = (float)totalFishDist[ntc] / (totalFishDist[1] + totalFishDist[0]);
+			float k_bs = (1.0 / 60.0 * turn);
+			float k_d = 1;
+
+			treeNodes[tn].rating = (bs * k_bs + d * k_d) / (k_bs + k_d);
+		}
+		assert(treeNodes[tn].rating >= 0);
+		assert(treeNodes[tn].rating <= 1);
+	}
 }
 #endif
 #ifdef RATE_2
@@ -223,62 +334,56 @@ float board_rateState(Board b, int turn, int turningColor, unsigned char *GameEn
             return 0;
         }
     }
-    float totalFishDist[2] = {0};
-    float blocker[2] = {0.0f, 0.0f};
+    long long totalFishDist[2] = {0, 0};
+    long long blocker[2] = {0, 0};
     //float connector[2] = {0};
 
     //int position[2] = {0};
     for (int c = 0, c2 = 1; c < 2; c++, c2--) {
-        for (int s1 = 0; s1 < swarmCount[c]; s1++) {
-            int start1 = 0;
+		int start1 = 0;
+		for (int s1 = 0; s1 < swarmCount[c]; s1++) {
             for (int f1 = start1; f1 < start1 + swarmSizes[c][s1]; f1++) {
                 for (int f2 = start1 + swarmSizes[c][s1]; f2 < fishCount[c]; f2++) {
                     /*connector[c] += (float) (int128_popcnt(
                             int128_and(b.data[c], m_blocker[fish[c][f1]][fish[c][f2]])) - 2) / 
                             m_blockingFields[fish[c][f1]][fish[c][f2]];*/
-                    blocker[c] += (float) int128_popcnt(
-                            int128_and(b.data[c2], m_blocker[fish[c][f1]][fish[c][f2]])) /
-                            m_blockingFields[fish[c][f1]][fish[c][f2]];
-                    int dist = MAX(abs(fish[c][f1] / 10 - fish[c][f2] / 10), abs(fish[c][f1] % 10 - fish[c][f2] % 10));
-                    totalFishDist[c] += dist * dist;
-                }
+					int128 check;
+					check.v0 = b.data[!c].v0 & m_blocker[fish[c][f1]][fish[c][f2]].v0;
+					check.v1 = b.data[!c].v1 & m_blocker[fish[c][f1]][fish[c][f2]].v1;
+#ifndef _WIN
+					blocker[c] += ((_builtin_popcountll(check.v0) + _builtin_popcountll(check.v1)) << 20) / m_blockingFields[fish[c][f1]][fish[c][f2]];                    
+#else
+					long long v = (__popcnt64(check.v0) + __popcnt64(check.v1)) << 20;
+					blocker[c] += v / m_blockingFields[fish[c][f1]][fish[c][f2]];
+#endif					
+					totalFishDist[c] += ( m_distance[fish[c][f1]][fish[c][f2]] << 20 );
+				}
             }
             start1 += swarmSizes[c][s1];
 
         }
-        /*for (int f = 0; f < fishCount[c]; f++) {
-            for (int i = f + 1; i < fishCount[c]; i++) {
-                
-            }
-            position[c] += m_positionValue[fish[c][f]];
-        }*/
-        /*connector[c] /= fishCount[c];
-        connector[c] += 0.5f;*/
-        //blocker[c] += 1;
-        //blocker[c] /= (fishCount[c] * fishCount[c]);
-        //blocker[c] += 0.5f;
-        totalFishDist[c] += 1 + blocker[c] * 16;
-        //totalFishDist[c] /= (fishCount[c] * fishCount[c]);
-        //position[c] /= fishCount[c];
+        totalFishDist[c] += 1 << 20 + blocker[c] * 16;
     }
     //float p = (float) position[turningColor] / (position[0] + position[1]);
     float bs = (float) swarmSizes[turningColor][maxSwarmSize[turningColor]] / (swarmSizes[0][maxSwarmSize[0]] + swarmSizes[1][maxSwarmSize[1]]);
-    float d = (float) totalFishDist[!turningColor] / (totalFishDist[1] + totalFishDist[0]);
-    float blocking = (blocker[!turningColor]) / (blocker[1] + blocker[0]);
+    float d = (float) totalFishDist[!turningColor] / (totalFishDist[1] + totalFishDist[0] + 1);
+
+    // float blocking = (blocker[!turningColor]) / (blocker[1] + blocker[0]);
     //float connecting = (float) connector[turningColor] / (connector[!turningColor] + connector[turningColor]);
     //float k_p = /*(-1.0 / 60.0 * turn + 1)*/0;
-    float k_bs = (1.0 / 60.0 * turn);
-    float k_d = /*MAX(1.0 / 30.0 * turn, 1)*/1;
 
-    float rating = (/*p * k_p + */bs * k_bs + d * k_d/* + blocking + connecting*/) / (k_bs/* + k_p*/ + k_d/* + 1*/);
+    float k_bs = (swarmRating * turn);
+    float k_d = 1;
+
+    float rating = ( bs * k_bs + d * k_d ) / (k_bs + k_d );
     if (board_debug || (rating < 0 || rating > 1)) {
         printf("TC: %d\n", turningColor);
-        printf("BL: %f, %f\n", blocker[turningColor], blocker[!turningColor]);
+        printf("BL: %lld, %lld\n", blocker[turningColor], blocker[!turningColor]);
         printf("BS: %d, %d\n", swarmSizes[turningColor][maxSwarmSize[turningColor]], swarmSizes[!turningColor][maxSwarmSize[!turningColor]]);
         printf("SC: %d, %d\n", swarmCount[turningColor], swarmCount[!turningColor]);
-        printf("DI: %f, %f\n", totalFishDist[turningColor], totalFishDist[!turningColor]);
+        printf("DI: %lld, %lld\n", totalFishDist[turningColor], totalFishDist[!turningColor]);
         //printf("CN: %f, %f\n", connector[turningColor], connector[!turningColor]);
-        printf("Blocker   : %f\n", blocking);
+        //printf("Blocker   : %f\n", blocking);
         //printf("Connector : %f\n", connecting);
         printf("Biggest S : %f\n", bs);
         printf("Fish Dist : %f\n", d);

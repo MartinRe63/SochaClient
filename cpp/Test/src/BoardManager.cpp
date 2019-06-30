@@ -10,6 +10,7 @@
 #include <iostream>
 #include <crtdbg.h>
 #include <intrin.h>
+#include <algorithm>
 #include "BoardManager.h"
 #include "BitManager.h"
 #include "MaskManager.h"
@@ -95,6 +96,7 @@ long BoardManager::blockValue(boardpane BP)
 	ret *= multiplier;
 	return ret;
 }
+
 
 
 /**
@@ -308,6 +310,24 @@ signed char getConnectedCount(int id, boardpane data, signed char fish[], signed
 	return connections;
 }
 
+unsigned long long BoardManager::quickBoardPaneValue(boardpane BP)
+{
+	unsigned long long res = std::min(((__popcnt64(BP[0] & MaskManager::fishValueMasks[4][0]) + __popcnt64(BP[1] & MaskManager::fishValueMasks[4][1]))), 2ULL) * 8L;
+	res += std::min(((__popcnt64(BP[0] & MaskManager::fishValueMasks[3][0]) + __popcnt64(BP[1] & MaskManager::fishValueMasks[3][1]))), 6ULL) * 4L;
+	res += std::min(((__popcnt64(BP[0] & MaskManager::fishValueMasks[2][0]) + __popcnt64(BP[1] & MaskManager::fishValueMasks[2][1]))), 10ULL) * 2L;
+	return res;
+}
+
+double BoardManager::quick_rateState(board b, int turn, int turningColor, bool& gameEnd)
+{
+	gameEnd = false;
+	uint64_t redval = BoardManager::quickBoardPaneValue(b[0]);
+	uint64_t blueval = BoardManager::quickBoardPaneValue(b[1]);
+	if (turningColor)
+		return blueval  / (blueval + redval + 1.0);
+	else
+		return redval / (blueval + redval + 1.0);
+}
 
 const int color_red = 0;
 const int color_blue = 1;
@@ -363,14 +383,14 @@ double BoardManager::board_rateState(board b, int turn, int turningColor, bool& 
 				for (int f2 = start1 + swarmSizes[c][s1]; f2 < fishCount[c]; f2++) {
 					boardpane res;
 					int128_and(b[c2], MaskManager::m_blocker[fish[c][f1]][fish[c][f2]], res);
-					blocker[c] += BitManager::BitCnt(res) * 10000 /
+					blocker[c] += BitManager::BitCnt(res) * 8192 /
 						MaskManager::m_blockingFields[fish[c][f1]][fish[c][f2]];
-					totalFishDist[c] += MaskManager::m_distance[fish[c][f1]][fish[c][f2]] * 10000;
+						totalFishDist[c] += MaskManager::m_distance[fish[c][f1]][fish[c][f2]] * 8192;
 				}
 			}
 			start1 += swarmSizes[c][s1];
 		}
-		totalFishDist[c] += 10000 + blocker[c] * 16;
+		totalFishDist[c] += 8192 + blocker[c] * 16;
 	}
 	float bs = (float)swarmSizes[turningColor][maxSwarmSize[turningColor]] / (swarmSizes[0][maxSwarmSize[0]] + swarmSizes[1][maxSwarmSize[1]]);
 	float d = (float)totalFishDist[!turningColor] / (totalFishDist[1] + totalFishDist[0] + 1);

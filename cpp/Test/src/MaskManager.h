@@ -44,6 +44,7 @@ public:
 	// A fish at 0,x or x,0 has a value 0
 	// A fish at 1,x or x,1 has a value 1
 	static uint64_t fishValueMasks[5][2]; // = new int64_t[5][2];  // Dimension - value, bitmask
+	static uint64_t ringOfFire[2][3][2];
 
 	static int128 m_moveDist[100][4];
 	static int128 m_field[100];

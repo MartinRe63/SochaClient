@@ -68,6 +68,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -109,27 +112,42 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>_WIN</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_WIN</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="test\src\BitManager.cpp" />
     <ClCompile Include="Test\src\BoardManager.cpp" />
+    <ClCompile Include="Test\src\ElapsedTimer.cpp" />
     <ClCompile Include="Test\src\FreeArrayManager.cpp" />
     <ClCompile Include="Test\src\IntListManager.cpp" />
+    <ClCompile Include="Test\src\logic.cpp" />
     <ClCompile Include="test\src\MaskManager.cpp" />
     <ClCompile Include="test\src\MoveManager.cpp" />
     <ClCompile Include="Test\src\NodeManager.cpp" />
+    <ClCompile Include="Test\src\serverIO.cpp" />
     <ClCompile Include="test\src\Test.cpp" />
+    <ClCompile Include="Test\src\xmlParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test\src\BitManager.h" />
     <ClInclude Include="test\src\BoardManager.h" />
+    <ClInclude Include="Test\src\ElapsedTimer.h" />
     <ClInclude Include="Test\src\FreeArrayManager.h" />
     <ClInclude Include="Test\src\IntListManager.h" />
+    <ClInclude Include="Test\src\logic.h" />
     <ClInclude Include="test\src\MaskManager.h" />
     <ClInclude Include="test\src\MoveManager.h" />
     <ClInclude Include="Test\src\NodeManager.h" />
+    <ClInclude Include="Test\src\serverIO.h" />
     <ClInclude Include="Test\src\SuperPackedMove.h" />
+    <ClInclude Include="Test\src\xmlParser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

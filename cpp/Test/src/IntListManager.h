@@ -1,10 +1,15 @@
 #pragma once
 
+#include <vector>
 #include "FreeArrayManager.h"
+#include "IntListManager.h"
 #include "SuperPackedMove.h"
-#include "NodeManager.h"
+// #include "NodeManager.h"
 
-const int blockDataSize = 10;
+#define  VectorBased 1
+
+const int blockDataSize = 16;
+using std::vector;
 
 class IntListManager
 {
@@ -12,9 +17,20 @@ public:
 	class ReadIterator
 	{
 	public:
-		// https://stackoverflow.com/questions/30898705/usage-of-the-foreach-loop-in-c
+#ifndef VectorBased
 		smallNode* GetNextItem();
+#else
+		inline smallNode* GetNextItem()
+		{
+			vector<smallNode>* nodeList = ilm->data[listIdx].nodeList;
+			if (virtualIdx >= nodeList->size())
+				return 0;
+			else
+				return &(*nodeList)[virtualIdx++];
+		}
+#endif
 		ReadIterator(int ListIdx, IntListManager* Ilm);
+		void Init(int ListIdx);
 
 	private:
 		int virtualIdx;
@@ -25,7 +41,14 @@ public:
 	class WriteIterator
 	{
 	public:
+#ifndef VectorBased
 		void AddItem( smallNode );
+#else
+		inline void WriteIterator::AddItem(smallNode n)
+		{
+			(*ilm->data[listIdx].nodeList)[relativBlockIdx++] = n;
+		}
+#endif
 		WriteIterator(int ListIdx, IntListManager* Ilm);
 
 	private:
@@ -34,16 +57,23 @@ public:
 		int listIdx;
 		IntListManager* ilm;
 	};
+
+
 	IntListManager( int );
-	int ReserveList();
+	int ReserveList( int size );
 
 	inline int GetLength(int ListIdx)
 	{
+#ifndef VectorBased
 		return data[ListIdx].f.length;
+#else
+		return data[ListIdx].nodeList->size();
+#endif
 	};
 
 	void Release(int ListIdx);
 	ReadIterator* GetReadIterator(int ListIdx);
+	ReadIterator* GetReadIterator();
 	WriteIterator* GetWriteIterator(int ListIdx);
 
 	friend class WriteIterator;
@@ -70,11 +100,17 @@ private:
 	{
 		union
 		{
+#ifndef VectorBased
 			first f;
 			second s;
+#else
+			std::vector<smallNode>* nodeList;
+#endif
 			nextFreeId fId;
 		};
 	};
+
+#ifndef VectorBased
 	inline int GetBlockIdx(int ListIdx, int Idx)
 	{
 		int blockCnt = (Idx + 1) / blockDataSize;
@@ -85,6 +121,7 @@ private:
 		}
 		return idx;
 	};
+#endif
 	void Add(int ListIdx, int BlockIdx, int relativeIdx, smallNode NewItem);
 
 	listData* data;

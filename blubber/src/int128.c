@@ -36,6 +36,10 @@ int int128_popcnt(int128 v){
 	return __popcnt64(v.v0) + __popcnt64(v.v1);
 #endif
 }
+void int128_setBitInVal(int index, int128* val)
+{
+	*val = int128_or(int128_setBit(index), *val);
+}
 int128 int128_setBit(int index){
     int128 r;
     r.v0 = 0;

@@ -47,6 +47,10 @@ int int128_popcnt(int128 v);
  * @return 
  */
 int128 int128_setBit(int index);
+
+void int128_setBitInVal(int index, int128* val);
+
+
 /**
  * Returns data != 0
  * @param data

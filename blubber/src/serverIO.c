@@ -142,6 +142,10 @@ int sIO_sendMove(LastMove m) {
 }
 
 int sIO_close() {
+#ifndef _WIN
     close(g_sockedfd);
+#else
+	closesocket(g_sockedfd);
+#endif
     return 1;
 }

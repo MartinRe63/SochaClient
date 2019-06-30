@@ -30,7 +30,7 @@ int logic_isInitialized(){
 }
 void logic_setMoveRequestFlag() {
     g_moveRequest = 1;
-	g_myTurnTime = clock() + CLOCKS_PER_SEC + (CLOCKS_PER_SEC * 7) / 8;
+	g_myTurnTime = clock() + CLOCKS_PER_SEC + (CLOCKS_PER_SEC * 31) / 32;
 }
 void logic_setState(State state){
     if(state.turn == 0){
@@ -69,19 +69,20 @@ void logic_update() {
         //printf("Color: %d\n", g_currentColor);
         //printf("Turn: %d\n", g_turnCount);
         //printf("Gegner\n");
-        tree_DebugWriteCurrentTree(g_turnCount);
-        printf("\n");
-        unsigned char test;
-        board_debug = 1;
-        printf("Turn: %d\n", g_turnCount);
-        printf("Rating: %f\n", board_rateState(g_currentBoard, g_turnCount, g_currentColor, &test));
-        board_debug = 0;
-        test = test + 1;
-        printf("\n");
         
         Turn t = tree_selectBestTurn();
         sIO_sendMove(board_turnToLastMove(t));
-        
+
+		tree_DebugWriteCurrentTree(g_turnCount);
+		printf("\n");
+		unsigned char test;
+		board_debug = 1;
+		printf("Turn: %d\n", g_turnCount);
+		// printf("Rating: %f\n", board_rateState(g_currentBoard, g_turnCount, g_currentColor, &test));
+		board_debug = 0;
+		test = test + 1;
+		printf("\n");
+
         board_applyTurn(&g_currentBoard, g_currentColor, t);
         //board_printCurrentState(g_currentBoard);
         g_moveRequest = 0;

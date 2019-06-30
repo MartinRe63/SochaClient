@@ -8,7 +8,7 @@
 #include "logic.h"
 #include "masc.h"
 
-//#define TEST
+// #define TEST
 
 int main(int argc, char**argv) {
 #ifndef TEST
@@ -72,7 +72,7 @@ int main(int argc, char**argv) {
     Board board = board_parseString(".RRRRRRRR.B........BB........BB........BB..O.....BB........BB...O....BB........BB........B.RRRRRRRR.");
     unsigned char gameEnd = 0;
     for(int i = 0; i < 100; i++){
-        printf("Rating: %f\n", board_rateState(board, 0, 0, &gameEnd));
+        // printf("Rating: %f\n", board_diffRate(board, 0, 0, g_treeNodeMemory + g_treeNodeMemory[node].firstChild, &gameEnd));
         printf("%d\n", (int)((((float)(rand() / 2)) / (RAND_MAX / 2 + 1)) * 16));
     }
 #endif

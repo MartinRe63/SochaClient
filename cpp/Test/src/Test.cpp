@@ -46,8 +46,8 @@ void testListManager()
 			// Reserve Items
 			if ( childArr[id] == -1 )
 			{
-				childListId = childArr[id] = ilm->ReserveList();
 				int lth = rand() % 60;
+				childListId = childArr[id] = ilm->ReserveList(lth);
 				smallNode j; // = smallNode(0, 0);
 				j.sPM.isSuperPackedMove = 0;
 				j.node.idx = -1;
@@ -142,7 +142,7 @@ void TestGaming(board Pos)
 	{
 		t->reset();
 		if (redNM == NULL)
-			redNM = new NodeManager(40000000, 0, Pos, 0, 0.01);
+			redNM = new NodeManager(40000000, 0, Pos, 0, 0.01, 20);
 		else
 		{
 			redNM->DisposeTree();
@@ -150,7 +150,7 @@ void TestGaming(board Pos)
 
 
 		expands = 0;
-		for (int k = 0; k < 200000; k++)
+		for (int k = 0; k < 1000000; k++)
 		{
 			redNM->SelectAction( true );
 			// System.out.println( nm.LastPositionToString() );
@@ -185,7 +185,7 @@ void TestGaming(board Pos)
 
 		if (blueNM == NULL)
 		{
-			blueNM = new NodeManager(40000000, 1, Pos, 1, 1);
+			blueNM = new NodeManager(40000000, 1, Pos, 1, 1, 0);
 			blueNM->ImplementMoveToTree(redMove);
 		}
 		else
@@ -193,7 +193,7 @@ void TestGaming(board Pos)
 			blueNM->DisposeTree();
 		}
 		expands = 0;
-		for (int k = 0; k < 200000; k++)
+		for (int k = 0; k < 1000000; k++)
 		{
 			blueNM->SelectAction(true);
 
@@ -325,7 +325,10 @@ int main(int argc, char**argv) {
 		"0........0" \
 		"0........0" \
 		".11111111." ), b);
-	
+	std::vector<int> v = { 1,2,3,4,5 };
+	int* x = &v[3];
+	*x = 0;
+
 	// TestGaming( b );
 	RealGame(argc, argv);
 	std::string i;

@@ -37,6 +37,7 @@ void board_applyTurn(Board * board, int turningColor, Turn t);
 
 Turn board_lastMoveToTurn(Board board, LastMove m);
 LastMove board_turnToLastMove(Turn t);
+float quick_rateState(Board b, int turn, int turningColor);
 
 #endif /* BOARD_H */
 
