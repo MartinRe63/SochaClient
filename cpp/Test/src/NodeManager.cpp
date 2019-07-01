@@ -124,7 +124,9 @@ double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd )
 	if (turn < quickRateTurn)
 		return BoardManager::quick_rateState(pos, turn, color, gameEnd);
 	else
-		return BoardManager::board_rateState(pos, turn, color, gameEnd);
+		// return BoardManager::board_rateState(pos, turn, color, gameEnd);
+		BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth, gameEnd);
+
 }
 
 static int randRefresh = 3;

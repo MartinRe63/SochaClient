@@ -231,7 +231,7 @@ void TestGaming(board Pos)
 
 		boardpane blockList[2][16]; // all blocks of a board
 		int blockCnt[2]; // blocklist for red and blue
-		result = BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0, gameEnd, blockCnt );
+		result = BoardManager::GetValue(Pos, 1, blockList, blockCnt, moveCnt, 0, gameEnd );
 
 		/* Total memory currently in use by the JVM */
 		// System.out.println("Total memory (bytes): " +  Runtime.getRuntime().totalMemory() );

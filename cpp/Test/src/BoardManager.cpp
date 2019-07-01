@@ -219,7 +219,7 @@ static const double factorBlockCount = 0.1 / 512;
 static const double factorMoveCount = 0.3 / 512;
 static long long dbg_cnt = 0;
 
-double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd, int potentialMoveCnt[2])
+double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd)
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
@@ -236,7 +236,7 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	long valOppositeColor = GetValueOfBlocks(pos, oppositeColor, blockList, blockCnt);
 	double ret = (valColor - valOppositeColor ) * factorBlocks + 
 		(1/blockCnt[color] - 1/blockCnt[oppositeColor] )*factorBlockCount +
-		(potentialMoveCnt[color] - potentialMoveCnt[oppositeColor])*factorMoveCount +
+		// (potentialMoveCnt[color] - potentialMoveCnt[oppositeColor])*factorMoveCount +
 		0.5;
 	double res;
 	// foundGameEnd = false;

@@ -44,7 +44,7 @@ public:
 #ifndef VectorBased
 		void AddItem( smallNode );
 #else
-		inline void WriteIterator::AddItem(smallNode n)
+		inline void AddItem(smallNode n)
 		{
 			(*ilm->data[listIdx].nodeList)[relativBlockIdx++] = n;
 		}

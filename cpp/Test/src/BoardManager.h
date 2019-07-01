@@ -39,7 +39,7 @@ public:
 
 	static double Analysis(int moveCnt, boardpane blockListAll[][16], int blockCount[], board pos, int FirstDepth);
 
-	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd, int potentialMoveCnt[2]);
+	static double GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd);
 	static double quick_rateState(board b, int turn, int turningColor, bool & gameEnd);
 	static double board_rateState(board b, int turn, int turningColor, bool & gameEnd);
 	static std::string AnalysisToString(double val);
