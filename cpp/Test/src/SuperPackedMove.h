@@ -21,7 +21,6 @@ typedef struct {
 
 typedef uint64_t boardpane[2];
 typedef boardpane board[3];
-
 typedef struct {
 	int turn;
 	int currentPlayer;

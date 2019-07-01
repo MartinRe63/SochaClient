@@ -23,6 +23,52 @@ public:
 	int GetResult();
 };
 
+typedef struct
+{
+	int x; 
+	int y;
+} point;
+typedef struct
+{
+	point min;
+	point max;
+	bool intersect(rect o) {
+		if (min.x > o.max.x || max.x > o.min.x)
+			return false;
+		if (min.y > o.max.y || max.y > o.min.y)
+			return false;
+		return true;
+	};
+	bool rectInBetween(rect from, rect to, rect& between)
+	{
+		if (!intersect(a, b))
+		{
+			if (from.min.x - to.max.x >= 2)
+			{
+				between.min.x = to.max.x + 1;
+				between.max.x = from.min.x - 1;
+			}
+			else if (to.min.x - from.max.x >= 2)
+			{
+				between.min.x = from.max.x + 1;
+				between.max.x = to.min.x - 1;
+			}
+			return true;
+		}
+		else
+			return false;
+	};
+} rect;
+typedef struct
+{
+	boardpane bp;
+	int lowX;
+	int lowY;
+
+} swarmInfo;
+
+
+
 class BoardManager {
 public:
 
