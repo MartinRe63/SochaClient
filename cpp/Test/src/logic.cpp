@@ -34,7 +34,7 @@ NodeManager* nodeManager = NULL;
 
 void logic_init() {
 	board b;
-	nodeManager = new NodeManager(40000000, g_myColor, b, 0, 0.005, 12);
+	nodeManager = new NodeManager(40000000, g_myColor, b, 0, 0.005, 0);
 }
 
 void logic_setMyColor(int color){

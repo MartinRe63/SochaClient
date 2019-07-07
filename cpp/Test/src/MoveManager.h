@@ -38,13 +38,13 @@ public:
 	static superPackedMove superPackMove(packedMove PM);
 	static packedMove superPack2packMove( superPackedMove SPM );
 
-	static coordinates movePossible(int x, int y, int dir, int lth, board positionData, int color, boardpane superlong);
-	static int getMoveList(board positionData, int color, packedMove moves[]);
-    static void addMoveToBoard( board positionData, int color, packedMove move);
+	static coordinates movePossible( int x, int y, int dir, int lth, board positionData, int color, boardpane superlong );
+	static void addMoveToBoard( board positionData, int color, packedMove move );
 	
-	static int FishCountInDirection(coordinates c, int dir, board positionData);
-	static packedMove LastMove2packedMove(LastMove LM, board positionData);
-	static LastMove PackedMove2LastMove(packedMove pM);
+	static int FishCountInDirection( coordinates c, int dir, board positionData );
+	static packedMove LastMove2packedMove( LastMove LM, board positionData );
+	static LastMove PackedMove2LastMove( packedMove pM );
+	static int getMoveList( board positionData, int color, packedMove moves[], int& distance );
 };
 
 #endif /* MOVEMANAGER_H_ */

@@ -14,6 +14,7 @@ uint64_t MaskManager::moveMasks[8][10][100][2];
 uint64_t MaskManager::neighborMasks[100][2];
 uint64_t MaskManager::fishValueMasks[5][2];
 uint64_t MaskManager::ringOfFire[2][3][2];   // color, 2=(min x and min y = 4) 1=(min x and min y = 3), 1=high 0=low
+uint64_t MaskManager::borderMask[4][2];    // x=1 -> 0, y=1 ->1, x=-1 ->2, y=-1 ->3
 
 int128 MaskManager::m_moveDist[100][4];
 int128 MaskManager::m_field[100];
@@ -21,6 +22,7 @@ int128 MaskManager::m_fieldNeighbors[100][9];
 int128 MaskManager::m_fieldDistanceSearch[100][7];
 int128 *MaskManager::m_fieldSkipCheck[100][8];
 int128 MaskManager::m_blocker[100][100];
+
 unsigned char MaskManager::MaskManager::m_blockingFields[100][100];
 unsigned char MaskManager::m_fieldNeighborIDs[100][9];
 unsigned char MaskManager::m_maxMoveDistance[100][8];
@@ -86,10 +88,17 @@ void MaskManager::initMasks(void) {
 	}
 	for ( int y= 0; y < 10; y++)
 	{
+		BitManager::SetBit(MaskManager::borderMask[0], y * 10 + 9);
+		BitManager::SetBit(MaskManager::borderMask[2], y * 10 );
 		for ( int x = 0; x < 10; x++)
 		{
 			int val = __min(x >= 5 ? 9-x : x, y >= 5 ? 9-y : y);
 			BitManager::SetBit(MaskManager::fishValueMasks[val], y*10+x);
+
+			if ( y == 0 )
+				BitManager::SetBit(MaskManager::borderMask[3], y * 10 + x );
+			if ( y == 9 )
+				BitManager::SetBit(MaskManager::borderMask[1], y * 10 + x);
 		}
 	}
 

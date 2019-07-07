@@ -91,3 +91,4 @@ unsigned long BitManager::GetNextRightBitPosIgnorePrevious(uint64_t low, uint64_
 	}
 	return GetFirstRightBitPos(low, high);
 }
+

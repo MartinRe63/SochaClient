@@ -59,8 +59,8 @@ private:
 	void InitNode(int nodeId, packedMove move, long visitCnt);
 	void releaseNode(smallNode NodeId, int NodeIdToExclude);
 
-	void expandNode(smallNode* sN , int moveColor, board position, int depth);
-	double rollOut( int color, board pos, int depth, bool& gameEnd);
+	void expandNode(smallNode* sN , int moveColor, board position, int depth, int& currentDistance);
+	float rollOut( int color, board pos, int depth, bool& gameEnd, int currentDistance);
 
 	smallNode * selectMove(smallNode * sN, int turn);
 

@@ -14,6 +14,7 @@
 #include "BoardManager.h"
 #include "BitManager.h"
 #include "MaskManager.h"
+#include "MoveManager.h"
 
 
 GameEndException::GameEndException(double Result) {
@@ -23,6 +24,10 @@ int GameEndException::GetResult(void) {
 	return res;
 }
 
+inline float texelWeight(float turnPart, float startWeight, float endWeight)
+{
+	return turnPart * endWeight + (1.0 - turnPart) * startWeight;
+}
 
 void BoardManager::Copy(board Source, board Destination)
 {
@@ -88,12 +93,13 @@ std::string BoardManager::ToString(board B)
 long BoardManager::blockValue(boardpane BP)
 {
 	long ret = __popcnt64(BP[0]) + __popcnt64(BP[1]);
-	int val = 4;
-	while ((BP[0] & MaskManager::fishValueMasks[val][0]) == 0 && (BP[1] & MaskManager::fishValueMasks[val][1]) == 0)
-		val--;
-	long multiplier = val > 1 ? 8 : val;
-	for (int i = 3; i <= val; i++) multiplier <<= 3;
-	ret *= multiplier;
+	ret *= ret;
+	//int val = 4;
+	//while ((BP[0] & MaskManager::fishValueMasks[val][0]) == 0 && (BP[1] & MaskManager::fishValueMasks[val][1]) == 0)
+	//	val--;
+	//long multiplier = val > 1 ? 8 : val;
+	//for (int i = 3; i <= val; i++) multiplier <<= 3;
+	//ret *= multiplier;
 	return ret;
 }
 
@@ -125,12 +131,12 @@ void BoardManager::ExtendBlock(boardpane posData, boardpane block, uint64_t newF
 			bitPos = BitManager::GetNextRightBitPosIgnorePrevious(newFishesLow, newFishesHigh, bitPos);
 	}
 }
-int BoardManager::GetBlockAndCnt( boardpane posData, boardpane blockList[] )
+int BoardManager::GetBlockAndCnt( boardpane posData, boardpane blockList[], int &fishCnt )
 {
 	// _ASSERT_EXPR ( blockList.length >= 16,  "Software Issue. A blocklist can maximum contain 16 blocks." );
 	// _ASSERT_EXPR ( blockList[15].length >= 2, "Software Issue. A blocklist hold the low and high long of the fishes." );
 	int cnt = 0;
-	int bitToFind = BitManager::BitCnt(posData);
+	int bitToFind = fishCnt = BitManager::BitCnt(posData);
 	uint64_t restFishesLow = posData[0];
 	uint64_t restFishesHigh = posData[1];
 	while (bitToFind > 0)
@@ -219,7 +225,7 @@ static const double factorBlockCount = 0.1 / 512;
 static const double factorMoveCount = 0.3 / 512;
 static long long dbg_cnt = 0;
 
-double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd)
+float BoardManager::GetValue(board pos, int color, boardpane blockList[][16], int blockCnt[], int depth, int firstMoveDepth, bool& gameEnd, int distance)
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
@@ -231,14 +237,12 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 	//}
 	
 	gameEnd = false;
-	long valColor = GetValueOfBlocks(pos, color, blockList, blockCnt);
+	int valCount, valOppositeCount;
+	long valColor = GetValueOfBlocks(pos, color, blockList, blockCnt, valCount);
 	int oppositeColor = !color;
-	long valOppositeColor = GetValueOfBlocks(pos, oppositeColor, blockList, blockCnt);
-	double ret = (valColor - valOppositeColor ) * factorBlocks + 
-		(1/blockCnt[color] - 1/blockCnt[oppositeColor] )*factorBlockCount +
-		// (potentialMoveCnt[color] - potentialMoveCnt[oppositeColor])*factorMoveCount +
-		0.5;
-	double res;
+	long valOppositeColor = GetValueOfBlocks(pos, oppositeColor, blockList, blockCnt, valOppositeCount);
+	float res;
+	float ret;
 	// foundGameEnd = false;
 	if ((res = BoardManager::Analysis(depth, blockList, blockCnt, pos, firstMoveDepth)) >= 0)
 	{
@@ -259,6 +263,28 @@ double BoardManager::GetValue(board pos, int color, boardpane blockList[][16], i
 		ret = res;
 
 		gameEnd = true;
+	}
+	else
+	{
+		int blockCntVal = 256 / blockCnt[color];
+		int blockCntOpVal = 256 / blockCnt[oppositeColor];
+		float turnPart = 1.0 / (depth + firstMoveDepth);
+		float k_bs = texelWeight(turnPart, 8, 4); // blocksize
+		//float k_d = texelWeight(turnPart, 50, 4);
+		float k_c = texelWeight(turnPart, 12, 4);  // center part
+		float k_cnt = texelWeight(turnPart, 6, 2);  
+		float k_bc = texelWeight(turnPart, 2, 16); // blockcount
+		float cnt = ( valCount * 1000000 / (valCount + valOppositeCount)) / 1e6f;
+		float bs = ( valColor * 1000000 / (valColor + valOppositeColor)) / 1e6f;
+		float bc = (blockCntVal * 1000000 / (blockCntVal + blockCntOpVal)) / 1e6f;
+
+		bool emptyEnd;
+		float c = BoardManager::quick_rateState(pos, 0, color, emptyEnd);
+		//int oppositeDistance;
+		//packedMove moveList[16 * 8]; // not used, because it's only a distance check
+		//MoveManager::getMoveList(pos, !color, moveList, oppositeDistance);
+		//float d = (distance*1000000 / (distance + oppositeDistance)) / 1e6f;
+		ret = ( bs * k_bs + c * k_c + cnt * k_cnt + bc * k_bc ) / ( k_bs + k_c + k_cnt + k_bc );
 	}
 	return ret;
 }
@@ -318,7 +344,7 @@ unsigned long long BoardManager::quickBoardPaneValue(boardpane BP)
 	return res;
 }
 
-double BoardManager::quick_rateState(board b, int turn, int turningColor, bool& gameEnd)
+float BoardManager::quick_rateState(board b, int turn, int turningColor, bool& gameEnd)
 {
 	gameEnd = false;
 	uint64_t redval = BoardManager::quickBoardPaneValue(b[0]);
@@ -429,10 +455,10 @@ string BoardManager::AnalysisToString(double val)
 		return "The game ends unentschieden.";
 }
 
-long BoardManager::GetValueOfBlocks(board pos, int color, boardpane blockList[][16], int blockCnt[])
+long BoardManager::GetValueOfBlocks(board pos, int color, boardpane blockList[][16], int blockCnt[], int& fishCnt)
 {
 	// System.out.println(PosManager.ToString( pos1 ));
-	blockCnt[color] = BoardManager::GetBlockAndCnt(pos[color], blockList[color]);
+	blockCnt[color] = BoardManager::GetBlockAndCnt(pos[color], blockList[color], fishCnt);
 	long posValue = 0;
 	for (int i = 0; i < blockCnt[color]; i++)
 	{
@@ -444,4 +470,60 @@ long BoardManager::GetValueOfBlocks(board pos, int color, boardpane blockList[][
 void BoardManager::SetBoardValue(board b, int x, int y, int color)
 {
 	BitManager::SetBit(b[color], x + y * 10);
+}
+
+void BoardManager::Outline(boardpane pos, boardpane res)
+{
+	res = { pos[0], pos[1] };
+	boardpane r;
+	bool right = BitManager::AndIsNotNull(pos, MaskManager::borderMask[0], r);
+	boardpane l;
+	bool left = BitManager::AndIsNotNull(pos, MaskManager::borderMask[2], l);
+	if (right)
+	{
+		res[0] |= (pos[0] ^ r[0]) < 1;
+		res[1] |= (pos[1] ^ r[1]) < 1;
+	}
+	if (left)
+	{
+		res[0] |= (pos[0] ^ l[0]) > 1;
+		res[1] |= (pos[1] ^ l[1]) > 1;
+	}
+	boardpane t;
+	boardpane u;
+	if (BitManager::AndIsNotNull(pos, MaskManager::borderMask[1], u))
+	{
+		res[0] |= (t[0] = ((pos[0] ^ u[0]) < 10));
+		res[1] |= (t[1] = ((pos[1] ^ u[1]) < 10));
+
+		if (right)
+		{
+			res[0] |= ((t[0] & MaskManager::borderMask[0][0]) ^ t[0]) < 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[0][1]) ^ t[1]) < 1;
+		}
+		if (left)
+		{
+			res[0] |= ((t[0] & MaskManager::borderMask[2][0]) ^ t[0]) > 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[2][1]) ^ t[1]) > 1;
+		}
+	}
+	boardpane d;
+	if (BitManager::AndIsNotNull(pos, MaskManager::borderMask[1], d))
+	{
+		res[0] |= (t[0] = ((pos[0] ^ d[0]) > 10));
+		res[1] |= (t[1] = ((pos[1] ^ d[1]) > 10));
+
+		if (right)
+		{
+			res[0] |= ((t[0] & MaskManager::borderMask[0][0]) ^ t[0]) < 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[0][1]) ^ t[1]) < 1;
+		}
+		if (left)
+		{
+			res[0] |= ((t[0] & MaskManager::borderMask[2][0]) ^ t[0]) > 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[2][1]) ^ t[1]) > 1;
+		}
+	}
+	res[0] ^= pos[0];
+	res[1] ^= pos[1];
 }

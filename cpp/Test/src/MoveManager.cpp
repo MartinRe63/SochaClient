@@ -230,13 +230,14 @@ LastMove MoveManager::PackedMove2LastMove(packedMove pM)
 	LastMove l = { 0 };
 	return l;
 }
-int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
+int MoveManager::getMoveList(board positionData, int color, packedMove moves[], int& distance)
 {
 	int moveCnt = 0;
 	boardpane long128; // used by movePossible
 	board pos;
 	BoardManager::Copy(positionData, pos);
 	int p = BitManager::GetFirstRightBitPos(pos[color][0], pos[color][1]);
+	distance = 0;
 	while (p < 100)
 	{
 		int x = p % 10;
@@ -250,10 +251,19 @@ int MoveManager::getMoveList(board positionData, int color, packedMove moves[])
 				BitManager::BitCount(MaskManager::directionMasks[dir][p][0] & positionData[1][0]) +
 				BitManager::BitCount(MaskManager::directionMasks[dir][p][1] & positionData[1][1]);
 			coordinates newP;
+			int val;
 			if ((newP = MoveManager::movePossible(x, y, dir, moveLth, positionData, color, long128)) > -1)
+			{
 				moves[moveCnt++] = MoveManager::PackMove(p, newP);
+				val = MoveManager::moveValue(x, y, newP % 10, newP / 10);
+				distance += (val > 0) ? val * val : 0;
+			}
 			if ((newP = movePossible(x, y, dir + 4, moveLth, positionData, color, long128)) > -1)
-				moves[moveCnt++] = MoveManager::PackMove(p, newP);;
+			{
+				moves[moveCnt++] = MoveManager::PackMove(p, newP);
+				val = MoveManager::moveValue(x, y, newP % 10, newP / 10);
+				distance += (val > 0) ? val * val : 0;
+			}
 		}
 		int oldp = p;
 		p = BitManager::GetNextRightBitPosIgnorePrevious(pos[color][0], pos[color][1], p);

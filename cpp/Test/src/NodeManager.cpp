@@ -78,7 +78,7 @@ void NodeManager::InitNode(int nodeId, packedMove move, long visitCnt)
 	// ((IntListManager*)ilm)->GetLength(i);
 }
 
-void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int depth)
+void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int depth, int& currentDistance)
 {
 	// fill the childList with valid moves based on the current position
 	assert( SN->sPM.isSuperPackedMove == 1 ); // "This node is already expanded.");
@@ -103,7 +103,7 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	//
 	// and expand all his children
 	//
-	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList);
+	int moveCnt = MoveManager::getMoveList(position, moveColor, moveList, currentDistance);
 	int childListId = memory[nodeId].node.childs.id = ilm->ReserveList(moveCnt);
 	IntListManager::WriteIterator* wIt = ilm->GetWriteIterator(childListId);
 	for (int i = 0; i < moveCnt; i++) {
@@ -114,7 +114,7 @@ void NodeManager::expandNode(smallNode* SN, int moveColor, board position, int d
 	delete wIt;
 }
 
-double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd )
+float NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd, int currentDistance)
 {
 	// calculate the value of this position
 	// here to count number of blocks and calculate the block value
@@ -125,7 +125,7 @@ double NodeManager::rollOut( int color, board pos, int depth, bool& gameEnd )
 		return BoardManager::quick_rateState(pos, turn, color, gameEnd);
 	else
 		// return BoardManager::board_rateState(pos, turn, color, gameEnd);
-		BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth, gameEnd);
+		return BoardManager::GetValue(pos, color, blockList, blockCnt, depth, firstMoveDepth, gameEnd, currentDistance);
 
 }
 
@@ -230,10 +230,12 @@ void NodeManager::SelectAction(bool oneCycle)
 			nextMoveColor = (nextMoveColor + 1) % 2;
 		}
 		// here cur is always a super packed move
+		int currentDistance = 0;
+
 		if ( cur->sPM.isGameEndNode == 0 )
 		{
 			// expand only if this is no game end node
-			expandNode(cur, nextMoveColor, pos, visitedCnt);               //  cur.expand();
+			expandNode(cur, nextMoveColor, pos, visitedCnt, currentDistance);               //  cur.expand();
 			cur = selectMove(cur, visitedCnt + firstMoveDepth);            // TreeNode newNode = cur.select();
 
 			visited[visitedCnt++] = cur;                                   // visited.add(newNode);
@@ -246,12 +248,12 @@ void NodeManager::SelectAction(bool oneCycle)
 		visitedCnt--; // back to the current level it's also showing the current depth
 		nextMoveColor = (nextMoveColor + 1) % 2;  // switch also the color back
 
-		double value = 0;
-        double result = 0;
+		float value = 0;
+        float result = 0;
         bool gameEnd = false;
 		if ( cur->sPM.isGameEndNode == 0 )
 		{
-			value = rollOut( nextMoveColor, pos, visitedCnt, gameEnd );
+			value = rollOut( nextMoveColor, pos, visitedCnt, gameEnd, currentDistance);
 			if ( gameEnd )
 			{
 				std::string s = BoardManager::ToString(pos);
