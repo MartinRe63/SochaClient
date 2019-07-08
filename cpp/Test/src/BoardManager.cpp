@@ -472,9 +472,32 @@ void BoardManager::SetBoardValue(board b, int x, int y, int color)
 	BitManager::SetBit(b[color], x + y * 10);
 }
 
+int BoardManager::CountAllMoves(board pos, int color, boardpane bestBlock)
+{
+	boardpane outlier;
+	Outline(bestBlock, outlier);
+	boardpane toCheck = { pos[color][0], pos[color][1] };
+	boardpane startPane;
+	toCheck[0] ^= bestBlock[0]; toCheck[1] ^= bestBlock[1]; // switch off best block
+	int p=BitManager::GetFirstRightBitPos(toCheck[0], toCheck[1]);
+	while ( p < 100 )
+	{
+		BitManager::SetBit(startPane, p);
+		bool outlierFound = false;
+		bool blocked = false;
+		while (!outlierFound && !blocked)
+		{
+			outlierFound = true;
+		}
+		p = BitManager::GetNextRightBitPos(toCheck[0], toCheck[1], p);
+	}
+}
+
 void BoardManager::Outline(boardpane pos, boardpane res)
 {
-	res = { pos[0], pos[1] };
+	res[0] = pos[0];
+	res[1] = pos[1];
+
 	boardpane r;
 	bool right = BitManager::AndIsNotNull(pos, MaskManager::borderMask[0], r);
 	boardpane l;

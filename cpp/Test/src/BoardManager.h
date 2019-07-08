@@ -61,6 +61,8 @@ public:
 	static std::string AnalysisToString(double val);
 	static void SetBoardValue(board b, int x, int y, int color);
 
+	int CountAllMoves(board pos, int color, boardpane bestBlock);
+
 	static void Outline(boardpane pos, boardpane res);
 private:
 	static long GetValueOfBlocks(board pos, int color, boardpane blockList[][16], int blockCnt[], int& fishCount);
