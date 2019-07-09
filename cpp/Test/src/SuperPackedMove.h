@@ -29,4 +29,4 @@ typedef struct {
 	board board;
 } State;
 
-
+#define nullPane { 0,0 }

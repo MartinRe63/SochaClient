@@ -272,6 +272,53 @@ int MoveManager::getMoveList(board positionData, int color, packedMove moves[], 
 	return moveCnt;
 }
 
+void MoveManager::MarkPotentialMoves( int p, board pos, int color, boardpane reachedPositions, boardpane stopPositions, boardpane newMoves, bool& stopFound )
+{
+	boardpane long128;
+	int x = p % 10;
+	int y = p / 10;
+	for (int dir = 0; dir < 4 && ! stopFound; dir++)
+	{
+		// count blue and red fishes in this direction
+		int moveLth =
+			BitManager::BitCount(MaskManager::directionMasks[dir][p][0] & pos[0][0]) +
+			BitManager::BitCount(MaskManager::directionMasks[dir][p][1] & pos[0][1]) +
+			BitManager::BitCount(MaskManager::directionMasks[dir][p][0] & pos[1][0]) +
+			BitManager::BitCount(MaskManager::directionMasks[dir][p][1] & pos[1][1]);
+		coordinates newP;
+		if ((newP = MoveManager::movePossible(x, y, dir, moveLth, pos, color, long128)) > -1)
+		{
+			long128[0] = 0; long128[1] = 0;
+			BitManager::SetBit( long128, newP );
+			stopFound = (long128[0] & stopPositions[0]) || (long128[1] & stopPositions[1]);
+			if ( ! stopFound )
+			{
+				if ( ! ( (long128[0] & reachedPositions[0]) || (long128[1] & reachedPositions[1]) ) )
+				{
+					newMoves[0] |= long128[0]; newMoves[1] |= long128[1];
+				}
+			}
+
+		}
+		if ( ! stopFound )
+		{
+			if ((newP = movePossible(x, y, dir + 4, moveLth, pos, color, long128)) > -1)
+			{
+				long128[0] = 0; long128[1] = 0;
+				BitManager::SetBit( long128, newP );
+				stopFound = (long128[0] & stopPositions[0]) || (long128[1] & stopPositions[1]);
+				if ( ! stopFound )
+				{
+					if ( ! ( (long128[0] & reachedPositions[0]) || (long128[1] & reachedPositions[1]) ) )
+					{
+						newMoves[0] |= long128[0]; newMoves[1] |= long128[1];
+					}
+				}
+			}
+		}
+	}
+}
+
 long long i = 0;
 
 void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )

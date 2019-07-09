@@ -472,25 +472,54 @@ void BoardManager::SetBoardValue(board b, int x, int y, int color)
 	BitManager::SetBit(b[color], x + y * 10);
 }
 
-int BoardManager::CountAllMoves(board pos, int color, boardpane bestBlock)
+
+int BoardManager::GetDistance(board pos, int color, boardpane bestBlock)
 {
 	boardpane outlier;
 	Outline(bestBlock, outlier);
 	boardpane toCheck = { pos[color][0], pos[color][1] };
 	boardpane startPane;
-	toCheck[0] ^= bestBlock[0]; toCheck[1] ^= bestBlock[1]; // switch off best block
+	boardpane reachedPositions;
+	toCheck[0] ^= bestBlock[0]; toCheck[1] ^= bestBlock[1]; // switch off best block of fishes
+	int totalDistance = 0;
+	int distance;
 	int p=BitManager::GetFirstRightBitPos(toCheck[0], toCheck[1]);
 	while ( p < 100 )
 	{
+		// per fish not in the selected block (biggest block or center block - here named bestBlock
+		startPane[0] = 0; startPane[1] = 0;
 		BitManager::SetBit(startPane, p);
+		reachedPositions[0] = startPane[0]; reachedPositions[1] = startPane[1];
 		bool outlierFound = false;
 		bool blocked = false;
+		int distance = 0;
 		while (!outlierFound && !blocked)
 		{
-			outlierFound = true;
+			boardpane newMovePane = nullPane;
+			int p1 = BitManager::GetFirstRightBitPos( startPane[0], startPane[1] );
+			while (!outlierFound && p1 < 100 )
+			{
+				MoveManager::MarkPotentialMoves( p1, pos, color, reachedPositions, outlier, newMovePane, outlierFound );
+				if ( ! outlierFound )
+					p1 = BitManager::GetNextRightBitPosIgnorePrevious( startPane[0], startPane[1], p1 );
+			}
+			if ( ! outlierFound )
+			{
+				blocked = newMovePane[0] == 0 && newMovePane[1] == 0;
+				if ( ! blocked )
+				{
+					reachedPositions[0] |= newMovePane[0]; reachedPositions[1] |= newMovePane[1];
+				}
+				else
+					distance=15;
+			}
+			distance++;
+			startPane[0] = newMovePane[0];  startPane[1] = newMovePane[1];
 		}
-		p = BitManager::GetNextRightBitPos(toCheck[0], toCheck[1], p);
+		totalDistance += distance*distance;
+		p = BitManager::GetNextRightBitPosIgnorePrevious(toCheck[0], toCheck[1], p);
 	}
+	return totalDistance;
 }
 
 void BoardManager::Outline(boardpane pos, boardpane res)
@@ -504,49 +533,95 @@ void BoardManager::Outline(boardpane pos, boardpane res)
 	bool left = BitManager::AndIsNotNull(pos, MaskManager::borderMask[2], l);
 	if (right)
 	{
-		res[0] |= (pos[0] ^ r[0]) < 1;
-		res[1] |= (pos[1] ^ r[1]) < 1;
+		res[0] |= (pos[0] ^ r[0]) << 1;
+		res[1] |= (pos[1] ^ r[1]) << 1;
+	}
+	else
+	{
+		res[0] |= pos[0] << 1;
+		res[1] |= pos[1] << 1;
 	}
 	if (left)
 	{
-		res[0] |= (pos[0] ^ l[0]) > 1;
-		res[1] |= (pos[1] ^ l[1]) > 1;
+		res[0] |= (pos[0] ^ l[0]) >> 1;
+		res[1] |= (pos[1] ^ l[1]) >> 1;
+	}
+	else
+	{
+		res[0] |= pos[0] >> 1;
+		res[1] |= pos[1] >> 1;
 	}
 	boardpane t;
 	boardpane u;
 	if (BitManager::AndIsNotNull(pos, MaskManager::borderMask[1], u))
 	{
-		res[0] |= (t[0] = ((pos[0] ^ u[0]) < 10));
-		res[1] |= (t[1] = ((pos[1] ^ u[1]) < 10));
-
+		res[0] |= (t[0] = ((pos[0] ^ u[0]) << 10));
+		res[1] |= (t[1] = ((pos[1] ^ u[1]) << 10));
+	}
+	else
+	{
+		res[0] |= (t[0] = (pos[0] << 10));
+		res[1] |= (t[1] = (pos[1] << 10));
+	}
+    if ( t[0] || t[1] )
+    {
 		if (right)
 		{
-			res[0] |= ((t[0] & MaskManager::borderMask[0][0]) ^ t[0]) < 1;
-			res[1] |= ((t[1] & MaskManager::borderMask[0][1]) ^ t[1]) < 1;
+			res[0] |= ((t[0] & MaskManager::borderMask[0][0]) ^ t[0]) << 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[0][1]) ^ t[1]) << 1;
+		}
+		else
+		{
+			res[0] |= t[0] << 1;
+			res[1] |= t[1] << 1;
 		}
 		if (left)
 		{
-			res[0] |= ((t[0] & MaskManager::borderMask[2][0]) ^ t[0]) > 1;
-			res[1] |= ((t[1] & MaskManager::borderMask[2][1]) ^ t[1]) > 1;
+			// cutoff fishes at the border first
+			res[0] |= ((t[0] & MaskManager::borderMask[2][0]) ^ t[0]) >> 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[2][1]) ^ t[1]) >> 1;
 		}
-	}
+		else
+		{
+			res[0] |= t[0] >> 1;
+			res[1] |= t[1] >> 1;
+		}
+    }
 	boardpane d;
 	if (BitManager::AndIsNotNull(pos, MaskManager::borderMask[1], d))
 	{
-		res[0] |= (t[0] = ((pos[0] ^ d[0]) > 10));
-		res[1] |= (t[1] = ((pos[1] ^ d[1]) > 10));
+		res[0] |= (t[0] = ((pos[0] ^ d[0]) >> 10));
+		res[1] |= (t[1] = ((pos[1] ^ d[1]) >> 10));
+	}
+	else
+	{
+		res[0] |= (t[0] = (pos[0] >> 10));
+		res[1] |= (t[1] = (pos[1] >> 10));
+	}
 
+    if ( t[0] || t[1] )
+    {
 		if (right)
 		{
-			res[0] |= ((t[0] & MaskManager::borderMask[0][0]) ^ t[0]) < 1;
-			res[1] |= ((t[1] & MaskManager::borderMask[0][1]) ^ t[1]) < 1;
+			res[0] |= ((t[0] & MaskManager::borderMask[0][0]) ^ t[0]) << 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[0][1]) ^ t[1]) << 1;
+		}
+		else
+		{
+			res[0] |= t[0] << 1;
+			res[1] |= t[1] << 1;
 		}
 		if (left)
 		{
-			res[0] |= ((t[0] & MaskManager::borderMask[2][0]) ^ t[0]) > 1;
-			res[1] |= ((t[1] & MaskManager::borderMask[2][1]) ^ t[1]) > 1;
+			res[0] |= ((t[0] & MaskManager::borderMask[2][0]) ^ t[0]) >> 1;
+			res[1] |= ((t[1] & MaskManager::borderMask[2][1]) ^ t[1]) >> 1;
 		}
-	}
+		else
+		{
+			res[0] |= t[0] >> 1;
+			res[1] |= t[1] >> 1;
+		}
+    }
 	res[0] ^= pos[0];
 	res[1] ^= pos[1];
 }

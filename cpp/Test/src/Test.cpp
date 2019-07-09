@@ -251,6 +251,17 @@ void TestGaming(board Pos)
 	cout << "Nano Seconds per playout = " + std::to_string((ms * 1000000) / totalExpands) << endl;
 }
 
+void TestGetDistance( board p )
+{
+	int res;
+	boardpane simulateBlock = { p[1][0], 0 }; // 0,1 to 0,8 are in the low 64 bit block
+	res = BoardManager::GetDistance( p, 1, simulateBlock );
+	cout << "Distance: " + std::to_string( res ) << endl;
+	simulateBlock[0] = 0x1004010040100400; simulateBlock[1] = 0x10040; // all left red fishes
+	res = BoardManager::GetDistance( p, 0, simulateBlock );
+	cout << "Distance: " + std::to_string( res ) << endl;
+}
+
 void RealGame(int argc, char**argv)
 {
 	char * host = "127.0.0.1";
@@ -318,10 +329,11 @@ int main(int argc, char**argv) {
 	// testFreeArrayManager();
 	// testListManager();
 	board b;
-	BoardManager::FromString(std::string(".11111111." \
-		"0........0" \
-		"0........0" \
-		"0.....C..0" \
+	BoardManager::FromString(std::string(
+		".11111111." \
+		"0..000...." \
+		"0........." \
+		"0.....C..." \
 		"0........0" \
 		"0........0" \
 		"0..C.....0" \
@@ -332,7 +344,8 @@ int main(int argc, char**argv) {
 	int* x = &v[3];
 	*x = 0;
 #ifdef _DEBUG
-	TestGaming( b );
+	// TestGaming( b );
+	TestGetDistance( b );
 #else
 	RealGame(argc, argv);
 #endif

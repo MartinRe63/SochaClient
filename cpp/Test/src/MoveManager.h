@@ -45,6 +45,8 @@ public:
 	static packedMove LastMove2packedMove( LastMove LM, board positionData );
 	static LastMove PackedMove2LastMove( packedMove pM );
 	static int getMoveList( board positionData, int color, packedMove moves[], int& distance );
+	static void MarkPotentialMoves( int fishPos, board pos, int color, boardpane reachedPositions, boardpane stopPositions, boardpane newMoves, bool& stopFound );
+
 };
 
 #endif /* MOVEMANAGER_H_ */
