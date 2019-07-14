@@ -331,9 +331,9 @@ int main(int argc, char**argv) {
 	board b;
 	BoardManager::FromString(std::string(
 		".11111111." \
-		"0..000...." \
-		"0........." \
-		"0.....C..." \
+		"0........0" \
+		"0........0" \
+		"0.....C..0" \
 		"0........0" \
 		"0........0" \
 		"0..C.....0" \
@@ -344,8 +344,9 @@ int main(int argc, char**argv) {
 	int* x = &v[3];
 	*x = 0;
 #ifdef _DEBUG
-	// TestGaming( b );
-	TestGetDistance( b );
+	TestGaming( b );
+	// TestGetDistance( b );
+	// RealGame(argc, argv);
 #else
 	RealGame(argc, argv);
 #endif

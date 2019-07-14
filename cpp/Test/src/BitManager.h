@@ -24,13 +24,13 @@ public:
 		return __popcnt64(pos[0]) + __popcnt64(pos[1]);
 	}
 
-	static inline bool AndIsNotNull(uint64_t v1[2], uint64_t v2[2], uint64_t res[2])
+	static inline bool AndIsNotNull(const uint64_t v1[2], const uint64_t v2[2], uint64_t res[2])
 	{
 		return ( ( res[0] = (v1[0] & v2[0]) ) || ( res[1] = (v1[1] & v1[1]) ) );
 	}
 
 	static void ClearBit( uint64_t pos[], int bitId );
-	static bool IsBit( uint64_t pos[], int bitId );
+	static bool IsBit( const uint64_t pos[], int bitId );
 
 	static int NumberOfTrailingZeros(uint64_t low, uint64_t high);
 	static unsigned long GetFirstRightBitPos(uint64_t low, uint64_t high);

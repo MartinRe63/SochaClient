@@ -28,7 +28,7 @@ void BitManager::ClearBit( uint64_t pos[], int bitId )
 	else
 		pos[1] &= ~( 1ULL << ( bitId-64 ) );
 }
-bool BitManager::IsBit( uint64_t pos[], int bitId )
+bool BitManager::IsBit( const uint64_t pos[], int bitId )
 {
 	if ( bitId < 64 )
 		return ( ( pos[0] & ( 1ULL << bitId ) ) ) != 0;

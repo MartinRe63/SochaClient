@@ -1,5 +1,10 @@
 
+#define Blub
+#ifndef Blub
 #include "Connect4Game.h"
+#else
+#include "SuperBlubber.h"
+#endif
 #include "BoardGameAI.h"
 #include "StatusUpdate.h"
 #include <iostream>
@@ -28,6 +33,8 @@ class CoutStatus : public StatusUpdate
 
 };
 
+#ifndef Blub
+
 int main()
 {
 	CoutStatus s;
@@ -35,7 +42,6 @@ int main()
 	std::vector<Move> moves;
 	auto ai = AIBuilder<Connect4Game>{}.iterativeDeepening().useTTable().enableTimeManagement().useMateDistancePruning().updateStats().create(&s);
 	string input;
-
 	cout << "1-7: move c: ai move" << endl;
 	cout << game->toString() << endl;
 	do
@@ -51,6 +57,70 @@ int main()
 			{
 				cout << "AI is calculating next move..." << endl;
 				SearchResult result = ai.search(game, INT_MAX, 3000);
+				game->makeMove(result.bestMove);
+				value = result.value;
+				kiMove = true;
+				break;
+			}
+			else
+			{
+				if (!is_number(input))
+				{
+					cout << "Invalid input. Try again" << endl;
+				}
+				else
+				{
+					col = stoi(input);
+					moves.clear();
+					game->moves(moves);
+					if (find_if(moves.begin(), moves.end(), [&col](const Move& obj) {return obj == col; }) != moves.end())
+					{
+						game->makeMove(col);
+						break;
+					}
+				}
+			}
+
+		} while (true);
+		system("cls");
+		cout << "1-7: move c: ai move" << endl;
+		cout << game->toString() << endl;
+		if (kiMove)
+		{
+			std::cout << "value: " << value << std::endl;
+		}
+	} while (!game->isGameOver());
+	system("pause");
+	return 0;
+}
+
+#else
+
+int main()
+{
+	CoutStatus s;
+	MaskManager::initMasks();
+	std::shared_ptr<SuperBlubber> game = std::make_shared<SuperBlubber>();
+	std::vector<Move> moves;
+	auto ai = AIBuilder<SuperBlubber>{}.iterativeDeepening().useTTable().enableTimeManagement().useMateDistancePruning().updateStats().create(&s);
+	string input;
+
+	cout << "xxyy: move xx = from / yy = true c: ai move" << endl;
+	cout << game->toString() << endl;
+	do
+	{
+		int col;
+		int value;
+		bool kiMove;
+		do
+		{
+			kiMove = false;
+			cin >> input;
+			if (input == string("c"))
+			{
+				cout << "AI is calculating next move..." << endl;
+				SearchResult result = ai.search(game, INT_MAX, 1850);
+				// SearchResult result = ai.search(game, 4, INT_MAX);
 				game->makeMove(result.bestMove);
 				value = result.value;
 				kiMove = true;
@@ -82,10 +152,11 @@ int main()
 		cout << game->toString() << endl;
 		if (kiMove)
 		{
-			std::cout << "value: " << value << std::endl;
+			std::cout << "Value: " << value << " Node Count:" << ai.analyzedPositions() << std::endl;
 		}
 	} while (!game->isGameOver());
 	system("pause");
 	return 0;
 }
 
+#endif

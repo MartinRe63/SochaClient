@@ -33,18 +33,20 @@ public:
 	static int moveValue(int fromX, int fromY, int toX, int toY);
 	static int moveValueSPM(superPackedMove sPM);
 	static int moveValuePM(packedMove PM);
+	static int moveNeigborValue(const boardpane BP, mov m);
+
 	static superPackedMove superPackMove(coordinates fromPos, coordinates toPos);
 
 	static superPackedMove superPackMove(packedMove PM);
 	static packedMove superPack2packMove( superPackedMove SPM );
 
-	static coordinates movePossible( int x, int y, int dir, int lth, board positionData, int color, boardpane superlong );
+	static coordinates movePossible( int x, int y, int dir, int lth, const board positionData, int color, boardpane superlong );
 	static void addMoveToBoard( board positionData, int color, packedMove move );
 	
 	static int FishCountInDirection( coordinates c, int dir, board positionData );
 	static packedMove LastMove2packedMove( LastMove LM, board positionData );
 	static LastMove PackedMove2LastMove( packedMove pM );
-	static int getMoveList( board positionData, int color, packedMove moves[], int& distance );
+	static int getMoveList( const board positionData, int color, packedMove moves[], int& distance );
 	static void MarkPotentialMoves( int fishPos, board pos, int color, boardpane reachedPositions, boardpane stopPositions, boardpane newMoves, bool& stopFound );
 
 };

@@ -44,7 +44,7 @@ public:
 
 	static int GetNextRightBitPos(boardpane BP, int currentPos);
 
-	static void Copy(board Source, board Destination);
+	static void Copy(const board Source, board Destination);
 	static void FromString(std::string Init, board &B);
 	static std::string ToString( board B);
 

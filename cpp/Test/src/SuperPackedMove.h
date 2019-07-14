@@ -27,6 +27,6 @@ typedef struct {
 	int startingPlayer;
 	LastMove lastMove;
 	board board;
-} State;
+} GameState;
 
 #define nullPane { 0,0 }

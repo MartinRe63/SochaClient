@@ -96,6 +96,14 @@ int MoveManager::moveValuePM(packedMove PM)
 	return moveValue(fromX, fromY, toX, toY);
 }
 
+int MoveManager::moveNeigborValue(const boardpane BP, mov m)
+{
+	boardpane tmp;
+	int res = BitManager::AndIsNotNull(MaskManager::neighborMasks[m[0]], BP, tmp) ? -16 : 0;
+	res += BitManager::AndIsNotNull(MaskManager::neighborMasks[m[1]], BP, tmp) ? 16 : 0;
+	return res;
+}
+
 inline superPackedMove MoveManager::superPackMove(coordinates fromPos, coordinates toPos)
 {
 	superPackedMove ret;
@@ -123,7 +131,7 @@ packedMove MoveManager::superPack2packMove( superPackedMove SPM )
 	return MoveManager::PackMove( m );
 }
 
-coordinates MoveManager::movePossible(int x, int y, int dir, int lth, board positionData, int color, boardpane superlong)
+coordinates MoveManager::movePossible(int x, int y, int dir, int lth, const board positionData, int color, boardpane superlong)
 {
 	int newX = 0;
 	int newY = 0;
@@ -230,7 +238,7 @@ LastMove MoveManager::PackedMove2LastMove(packedMove pM)
 	LastMove l = { 0 };
 	return l;
 }
-int MoveManager::getMoveList(board positionData, int color, packedMove moves[], int& distance)
+int MoveManager::getMoveList(const board positionData, int color, packedMove moves[], int& distance)
 {
 	int moveCnt = 0;
 	boardpane long128; // used by movePossible
@@ -255,14 +263,14 @@ int MoveManager::getMoveList(board positionData, int color, packedMove moves[], 
 			if ((newP = MoveManager::movePossible(x, y, dir, moveLth, positionData, color, long128)) > -1)
 			{
 				moves[moveCnt++] = MoveManager::PackMove(p, newP);
-				val = MoveManager::moveValue(x, y, newP % 10, newP / 10);
-				distance += (val > 0) ? val * val : 0;
+				//val = MoveManager::moveValue(x, y, newP % 10, newP / 10);
+				//distance += (val > 0) ? val * val : 0;
 			}
 			if ((newP = movePossible(x, y, dir + 4, moveLth, positionData, color, long128)) > -1)
 			{
 				moves[moveCnt++] = MoveManager::PackMove(p, newP);
-				val = MoveManager::moveValue(x, y, newP % 10, newP / 10);
-				distance += (val > 0) ? val * val : 0;
+				//val = MoveManager::moveValue(x, y, newP % 10, newP / 10);
+				//distance += (val > 0) ? val * val : 0;
 			}
 		}
 		int oldp = p;

@@ -29,7 +29,7 @@ inline float texelWeight(float turnPart, float startWeight, float endWeight)
 	return turnPart * endWeight + (1.0 - turnPart) * startWeight;
 }
 
-void BoardManager::Copy(board Source, board Destination)
+void BoardManager::Copy(const board Source, board Destination)
 {
 	for ( int c = 0; c < 3; c++ )
 		for ( int b = 0; b < 2; b++ )
@@ -102,7 +102,6 @@ long BoardManager::blockValue(boardpane BP)
 	//ret *= multiplier;
 	return ret;
 }
-
 
 
 /**
@@ -269,11 +268,12 @@ float BoardManager::GetValue(board pos, int color, boardpane blockList[][16], in
 		int blockCntVal = 256 / blockCnt[color];
 		int blockCntOpVal = 256 / blockCnt[oppositeColor];
 		float turnPart = 1.0 / (depth + firstMoveDepth);
-		float k_bs = texelWeight(turnPart, 8, 4); // blocksize
-		//float k_d = texelWeight(turnPart, 50, 4);
-		float k_c = texelWeight(turnPart, 12, 4);  // center part
-		float k_cnt = texelWeight(turnPart, 6, 2);  
+		float k_bs = texelWeight(turnPart, 2, 6); // blocksize
+		float k_d = texelWeight(turnPart, 4, 12);
+		float k_c = texelWeight(turnPart, 14, 6);  // center part
+		float k_cnt = texelWeight(turnPart, 2, 2);  
 		float k_bc = texelWeight(turnPart, 2, 16); // blockcount
+
 		float cnt = ( valCount * 1000000 / (valCount + valOppositeCount)) / 1e6f;
 		float bs = ( valColor * 1000000 / (valColor + valOppositeColor)) / 1e6f;
 		float bc = (blockCntVal * 1000000 / (blockCntVal + blockCntOpVal)) / 1e6f;
@@ -284,7 +284,38 @@ float BoardManager::GetValue(board pos, int color, boardpane blockList[][16], in
 		//packedMove moveList[16 * 8]; // not used, because it's only a distance check
 		//MoveManager::getMoveList(pos, !color, moveList, oppositeDistance);
 		//float d = (distance*1000000 / (distance + oppositeDistance)) / 1e6f;
-		ret = ( bs * k_bs + c * k_c + cnt * k_cnt + bc * k_bc ) / ( k_bs + k_c + k_cnt + k_bc );
+		boardpane bestBlock;
+		float d = 0.5;
+		if (firstMoveDepth + depth > 0)
+		{
+			int maxCnt = INT_MIN;
+			int bestIdx = 0;
+			int cntFishesInMaxBlock;
+			for (int i = 0; i < blockCnt[color]; i++)
+				if ((cntFishesInMaxBlock = BitManager::BitCnt(blockList[color][i])) > maxCnt)
+				{
+					maxCnt = cntFishesInMaxBlock;
+					bestIdx = i;
+				}
+			int dist = 8192 / ( GetDistance(pos, color, blockList[color][bestIdx]) + 1 );
+			maxCnt = INT_MIN;
+			bestIdx = 0;
+			for (int i = 0; i < blockCnt[oppositeColor]; i++)
+				if ((cntFishesInMaxBlock = BitManager::BitCnt(blockList[oppositeColor][i])) > maxCnt)
+				{
+					maxCnt = cntFishesInMaxBlock;
+					bestIdx = i;
+				}
+			int oDist = 8192 / ( GetDistance(pos, oppositeColor, blockList[oppositeColor][bestIdx]) + 1 );
+
+			d = (dist * 1000000 / (dist + oDist)) / 1e6f;
+		}
+		ret = ( bs * k_bs + c * k_c + cnt * k_cnt + bc * k_bc + d * k_d ) / ( k_bs + k_c + k_cnt + k_bc + k_d );
+		if ( ( firstMoveDepth + depth ) > 40 )
+		{
+			std::string bS;
+			bS = BoardManager::ToString(pos);
+		}
 	}
 	return ret;
 }

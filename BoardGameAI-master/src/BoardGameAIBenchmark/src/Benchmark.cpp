@@ -11,9 +11,9 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if (argc > 1)
+	if (true)
 	{
-		string directory = argv[1];
+		string directory = "C:\\Users\\rennekem\\git\\repository\\BoardGameAI-master\\src\\BoardGameAIBenchmark\\testdata";
 		string testData = "Test_L2_R2";
 
 		auto ai1 = AIBuilder<Connect4GameExt<false>>{}.iterativeDeepening().useTTable().useMateDistancePruning().create();
