@@ -8,24 +8,28 @@
 #include "MaskManager.h"
 #include "MoveManager.h"
 
+inline void ToMov(Move M, mov& m, bool& opponentRemoved)
+{
+	uint16_t mask = (1 << (sizeof(Move)*8 - 1));
+	opponentRemoved = (M & mask) != 0;
+	M &= (mask - 1);
+	m[0] = M % 128;
+	m[1] = M / 128;
+}
 inline packedMove ToPackedMove(Move M, bool& opponentRemoved)
 {
-	uint16_t mask = (1 << (sizeof(Move) - 1));
-	opponentRemoved = (M && mask) != 0;
-	M &= (mask - 1);
-	coordinates coFrom = M && 127;
-	coordinates coTo = M && 127 << 7;
-	return MoveManager::PackMove(coFrom, coTo);
+	mov m;
+	ToMov(M, m, opponentRemoved);
+	return MoveManager::PackMove(m);
 }
 inline Move ToMove(packedMove p, bool opponentRemoved)
 {
 	mov m; 
 	MoveManager::UnpackMove(p, m);
-	return (Move)(m[0] || m[1] << 7 || ((Move)opponentRemoved) << sizeof(Move)-1);
+	return (Move)(m[0] | m[1] << 7 | (((Move)opponentRemoved) << sizeof(Move)*8-1));
 }
 static uint64_t randomNumbers[2][100];
 static const int MaxPossibleEval = 100;
-static const unsigned long long opponentRemoved = 0x8000000000000000ULL;
 
 /* staticMoveEvaluation true = moves are sorted by AI, false = moves are returned sorted */
 template<bool staticMoveEvaluation = true, bool staticArray = true>
@@ -35,8 +39,10 @@ private:
 	board b;
 	uint64_t mHash = 0;
 	bool won = false;
-	boardpane FishBlockList[2][16];
-	int FishBlockCnt[2];
+	bool lost = false;
+	boardpane FishSwarmList[2][16];
+	int FishSwarmCnt[2];
+	int FishCount[2];
 
 public:
 	SuperBlubberExt()
@@ -69,10 +75,15 @@ public:
 	{
 		return &b;
 	}
-	bool calculateHaswon( int color )
+	bool calculateHaswon( int color, int moveCnt )
 	{
-		BoardManager::GetBlockAndCnt(b[color], FishBlockList[color], FishBlockCnt[color]);
-		return FishBlockCnt[color] == 1;
+		FishSwarmCnt[color] = BoardManager::GetBlockAndCnt(b[color], FishSwarmList[color], FishCount[color]);
+		if (moveCnt % 2 == 1)
+		{
+			return FishSwarmCnt[color] == 1;
+		}
+		else
+			return false;
 	}
 	bool isPlayable(int col) const
 	{
@@ -86,43 +97,38 @@ public:
 		bool removed;
 		pM = ToPackedMove(n, removed);
 		MoveManager::UnpackMove(pM, m);
-		if (removed)
-			n ^= opponentRemoved;
 		int c = currentPlayer(); 
 		mHash ^= randomNumbers[c][m[0]];
 		mHash ^= randomNumbers[c][m[1]];
 
 		MoveManager::addMoveToBoard(b, c, pM);
-		won = calculateHaswon(c);
+		int cnt = moveCounter();
+		won = calculateHaswon( c, cnt );
+		lost = calculateHaswon( !c, cnt );
 	}
 	void undoMove_impl()
 	{
 		Move n = plyList.lastMove();
 		mov m;
-		packedMove pM;
 		bool removed;
-		pM = ToPackedMove(n, removed);
-		MoveManager::UnpackMove(pM, m);
-
-		if (removed)
-			n ^= opponentRemoved;
+		ToMov(n, m, removed);
 		int c = opponentPlayer();
 		mHash ^= randomNumbers[c][m[1]];
 		mHash ^= randomNumbers[c][m[0]];
 		std::swap(m[0], m[1]);
-		MoveManager::addMoveToBoard(b, c, pM);
+		MoveManager::addMoveToBoard(b, c, m);
 		if (removed)
 			BitManager::SetBit(b[!c], m[1]);
 		won = false;
 	}
 	bool isGameOver_impl() const
 	{
-		return won || moveCounter() == MAX_PLY;
+		return won || lost || moveCounter() == MAX_PLY;
 	}
 
 	bool hasWon_impl() const
 	{
-		return won;
+		return won || lost;
 	}
 	int mapLastMoveToCounterMoveState_impl() const
 	{
@@ -136,11 +142,17 @@ public:
 
 	int16_t evaluate_impl() const
 	{
+		//
+		// in case the analysed move is a win it's very negative for the analysed position
+		//
 		if (hasWon_impl())
 		{
-			return -(MaxPossibleEval+MAX_PLY - moveCounter()); // -((SIZE - moveCounter() + 2) / 2);
+			return (won ? -1 : 1 ) * ( MaxPossibleEval + MAX_PLY - moveCounter()); // -((SIZE - moveCounter() + 2) / 2);
 		}
-		return 0;
+		int color = currentPlayer();
+		int swarmValue = FishSwarmCnt[color] - FishSwarmCnt[!color]; //  (16 - FishSwarmCnt[!color]) - (16 - FishSwarmCnt[color]);
+		int fishCountValue = FishCount[!color] - FishCount[color];
+		return swarmValue + fishCountValue;
 
 	}
 	int16_t maxPossibleEvaluation_impl() const
@@ -179,12 +191,12 @@ public:
 				MoveManager::UnpackMove(pM, m);
 				Value val = MoveManager::moveValuePM(pM) + 16; // center moves might be better
 				val += MoveManager::moveNeigborValue(*b[c], m) + 32; // much better to have a neighbor
-				Move M = pM;
-				if (BitManager::IsBit(*b[!c], m[1]))
+				bool removeOpponent = BitManager::IsBit(*b[!c], m[1]);
+				if (removeOpponent)
 				{
 					val += 64; // super to remove opponent fishes
-					M |= opponentRemoved;
 				}
+				Move M = ToMove(pM, removeOpponent);
 				currentMove++;
 				return ExtMove(M, val);
 			}

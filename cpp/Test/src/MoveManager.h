@@ -41,6 +41,7 @@ public:
 	static packedMove superPack2packMove( superPackedMove SPM );
 
 	static coordinates movePossible( int x, int y, int dir, int lth, const board positionData, int color, boardpane superlong );
+	static void addMoveToBoard(board positionData, int color, mov move);
 	static void addMoveToBoard( board positionData, int color, packedMove move );
 	
 	static int FishCountInDirection( coordinates c, int dir, board positionData );

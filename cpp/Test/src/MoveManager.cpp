@@ -329,11 +329,8 @@ void MoveManager::MarkPotentialMoves( int p, board pos, int color, boardpane rea
 
 long long i = 0;
 
-void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
+void MoveManager::addMoveToBoard(board positionData, int color, mov move)
 {
-	mov move;
-	MoveManager::UnpackMove(PM, move);
-
 	// try to enable register usage
 	int moveFrom = move[0];
 	int moveTo = move[1];
@@ -343,14 +340,19 @@ void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
 	assert(BitManager::IsBit(positionData[color], moveFrom));
 	assert(!BitManager::IsBit(positionData[color], moveTo));
 	assert(!BitManager::IsBit(positionData[2], moveTo));
-	_ASSERT_EXPR( BitManager::IsBit(positionData[color], moveFrom), "unknown software issue - fish to move is not at the position to move from.");
-	_ASSERT_EXPR( ! BitManager::IsBit(positionData[color], moveTo ), "unknown software issue - at the moveto position is a fish of the same color.");
-	_ASSERT_EXPR( ! BitManager::IsBit(positionData[2], moveTo ), "unknown software issue - at the moveto position is a crake.");
+	//_ASSERT_EXPR(BitManager::IsBit(positionData[color], moveFrom), "unknown software issue - fish to move is not at the position to move from.");
+	//_ASSERT_EXPR(!BitManager::IsBit(positionData[color], moveTo), "unknown software issue - at the moveto position is a fish of the same color.");
+	//_ASSERT_EXPR(!BitManager::IsBit(positionData[2], moveTo), "unknown software issue - at the moveto position is a crake.");
 
-	BitManager::ClearBit(positionData[color], moveFrom );
-	BitManager::SetBit(positionData[color], moveTo );
-	if ( BitManager::IsBit(positionData[(color+1)%2], moveTo ) )
+	BitManager::ClearBit(positionData[color], moveFrom);
+	BitManager::SetBit(positionData[color], moveTo);
+	if (BitManager::IsBit(positionData[(color + 1) % 2], moveTo))
 		// remove opposite color fish if available
-		BitManager::ClearBit(positionData[(color+1)%2], moveTo );
-
+		BitManager::ClearBit(positionData[(color + 1) % 2], moveTo);
+}
+void MoveManager::addMoveToBoard( board positionData, int color, packedMove PM )
+{
+	mov move;
+	MoveManager::UnpackMove(PM, move);
+	MoveManager::addMoveToBoard(positionData, color, move);
 }
